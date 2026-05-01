@@ -386,8 +386,31 @@ button:disabled {
 
 .cgame-submit.hidden { display: none; }
 
-.cgame-play-again {
+.cgame-overlay-actions {
+  display: flex;
+  gap: 8px;
   margin-top: 4px;
+  justify-content: center;
+}
+
+.cgame-share {
+  font-size: 13px;
+  background: var(--color-text-primary);
+  color: var(--color-background-primary);
+  border-color: var(--color-text-primary);
+}
+.cgame-share:hover:not(:disabled) {
+  background: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+  opacity: 0.85;
+}
+.cgame-share.copied {
+  background: var(--color-text-success);
+  border-color: var(--color-text-success);
+}
+
+.cgame-play-again {
+  /* sits next to .cgame-share in the actions row */
 }
 
 /* =========================================================

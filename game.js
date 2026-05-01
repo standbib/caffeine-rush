@@ -498,8 +498,54 @@
     if (skipBtn) skipBtn.addEventListener('click', exitIntermission);
   }
 
+  // Share button — uses Web Share API (mobile + Safari/Chrome desktop),
+  // falls back to clipboard + visual confirmation, then to a final prompt().
+  function initShareButton() {
+    const btn = document.getElementById('cg-share-btn');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const score = document.getElementById('cg-final').textContent || '0';
+      const level = document.getElementById('cg-final-level').textContent || '1';
+      const text  = "I scored " + score + " on Caffeine Rush — made it to Level " + level + " before falling asleep. Beat my score:";
+      const url   = 'https://caffeine.ianstandbridge.com';
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Caffeine Rush', text: text, url: url });
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return; // user cancelled, no-op
+          // any other error → fall through to clipboard fallback
+        }
+      }
+
+      const payload = text + ' ' + url;
+      const flashCopied = () => {
+        const orig = btn.textContent;
+        btn.textContent = 'Link copied';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.classList.remove('copied');
+        }, 1800);
+      };
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(payload);
+          flashCopied();
+          return;
+        }
+      } catch (_) { /* fall through */ }
+
+      // Last resort
+      window.prompt('Copy your share text:', payload);
+    });
+  }
+
   initWelcomeModal();
   initIntermissionControls();
+  initShareButton();
   applyLevelTheme();
   buildBackground();
   rebuildReceptors();
