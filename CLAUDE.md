@@ -19,8 +19,7 @@ caffeine-rush/
 ├── index.html        landing wrapper + game container + monetization + edu copy
 ├── styles.css        :root design tokens + game styles + landing styles
 ├── game.js           game logic (IIFE, no globals beyond cgDrink/cgReset)
-├── public/
-│   └── favicon.svg
+├── favicon.svg
 ├── _input/
 │   └── caffeine_rush_game_v5.html   original single-file source, reference only
 ├── README.md

@@ -25,7 +25,7 @@ Then open http://localhost:8000.
 - `index.html` — landing wrapper, game, joke ad slot, "How caffeine actually works", BMC link
 - `styles.css` — `:root` design tokens + game styles + landing styles
 - `game.js` — game logic (IIFE), extracted verbatim from the original single-file artifact
-- `public/favicon.svg` — caffeine-molecule favicon
+- `favicon.svg` — caffeine-molecule favicon
 - `_input/` — original single-file source kept as reference (not used at runtime)
 - `CLAUDE.md` — notes for contributors using Claude Code
 
