@@ -8,6 +8,19 @@
     { positions: [70, 180, 290, 400, 510, 620], spawnStart: 800, spawnEnd: 450, halfLife: 6000, sticky: 6000, durationMs: 9e9, name: 'Late night' },
   ];
 
+  const FACTS = [
+    "Caffeine has a half-life of about 5 hours. Half of your noon coffee is still in you at 5pm.",
+    "Adenosine doesn't make you tired — it just signals neurons to slow down. Caffeine blocks the messenger.",
+    "Espresso has less caffeine per shot than drip coffee per cup, but more per ounce.",
+    "It takes about 20 minutes for caffeine to start working.",
+    "Tolerance builds because your brain grows MORE adenosine receptors to compensate.",
+    "A 'cup' in caffeine science is 8oz. Most coffee cups today are 12–20oz.",
+    "Decaf isn't caffeine-free — it has 2–15mg per cup vs. 80–100mg for regular.",
+    "Cold brew has more caffeine than hot drip because of longer steeping time.",
+  ];
+  const INTERMISSION_MS = 5000;
+  const COOLDOWN_RING_CIRCUMFERENCE = 56.55; // 2 * pi * 9
+
   const state = {
     score: 0, caffeine: 5, caffeineMax: 8,
     drinkCooldown: 0, drinkCooldownMax: 8000,
@@ -18,7 +31,18 @@
     alertnessTimer: 0, alertnessFailMs: 5000,
     gameTime: 0, gameOver: false,
     rafId: null, lastFrameTime: 0,
+    intermission: false, intermissionStart: 0, intermissionNextIdx: 0,
+    intermissionTimerId: null,
+    usedFacts: [],
   };
+
+  function pickFact() {
+    if (state.usedFacts.length >= FACTS.length) state.usedFacts = [];
+    let idx;
+    do { idx = Math.floor(Math.random() * FACTS.length); } while (state.usedFacts.indexOf(idx) !== -1);
+    state.usedFacts.push(idx);
+    return FACTS[idx];
+  }
 
   function el(tag, attrs, parent) {
     const e = document.createElementNS(NS, tag);
@@ -111,16 +135,61 @@
   }
 
   function maybeAdvanceLevel() {
+    if (state.intermission || state.gameOver) return;
     const lvl = LEVELS[state.levelIdx];
     const elapsed = state.gameTime - state.levelStartTime;
     if (state.levelIdx < LEVELS.length - 1 && elapsed >= lvl.durationMs) {
-      state.levelIdx++;
-      state.level = state.levelIdx + 1;
-      state.levelStartTime = state.gameTime;
-      document.getElementById('cg-level').textContent = state.level;
-      rebuildReceptors();
-      showBanner('Level ' + state.level, LEVELS[state.levelIdx].name);
+      enterIntermission(state.levelIdx + 1);
     }
+  }
+
+  function enterIntermission(nextIdx) {
+    state.intermission = true;
+    state.intermissionStart = performance.now();
+    state.intermissionNextIdx = nextIdx;
+
+    const fact = pickFact();
+    const lvlEl  = document.getElementById('cg-int-level');
+    const nameEl = document.getElementById('cg-int-name');
+    const factEl = document.getElementById('cg-int-fact');
+    const overlay = document.getElementById('cg-intermission');
+    const timerFill = document.getElementById('cg-int-timer-fill');
+
+    if (lvlEl)  lvlEl.textContent  = 'Level ' + (nextIdx + 1);
+    if (nameEl) nameEl.textContent = LEVELS[nextIdx].name;
+    if (factEl) factEl.textContent = fact;
+    if (timerFill) timerFill.style.width = '100%';
+    if (overlay) overlay.classList.add('show');
+
+    if (state.intermissionTimerId) clearTimeout(state.intermissionTimerId);
+    state.intermissionTimerId = setTimeout(exitIntermission, INTERMISSION_MS);
+  }
+
+  function exitIntermission() {
+    if (!state.intermission) return;
+    if (state.intermissionTimerId) {
+      clearTimeout(state.intermissionTimerId);
+      state.intermissionTimerId = null;
+    }
+    const nextIdx = state.intermissionNextIdx;
+    state.intermission = false;
+    state.levelIdx = nextIdx;
+    state.level = nextIdx + 1;
+    state.levelStartTime = state.gameTime;
+    state.adenosineNextSpawn = state.gameTime + 800; // brief grace period after intermission
+    document.getElementById('cg-level').textContent = state.level;
+    document.getElementById('cg-intermission').classList.remove('show');
+    rebuildReceptors();
+    showBanner('Level ' + state.level, LEVELS[state.levelIdx].name);
+  }
+
+  function updateIntermissionTimer() {
+    const fill = document.getElementById('cg-int-timer-fill');
+    if (!fill) return;
+    const elapsed = performance.now() - state.intermissionStart;
+    const remaining = Math.max(0, INTERMISSION_MS - elapsed);
+    const pct = (remaining / INTERMISSION_MS) * 100;
+    fill.style.width = pct.toFixed(1) + '%';
   }
 
   function showBanner(title, sub) {
@@ -164,7 +233,13 @@
 
   function endGame() {
     state.gameOver = true;
+    if (state.intermissionTimerId) {
+      clearTimeout(state.intermissionTimerId);
+      state.intermissionTimerId = null;
+    }
+    state.intermission = false;
     document.getElementById('cg-overlay').classList.add('show');
+    document.getElementById('cg-intermission').classList.remove('show');
     document.getElementById('cg-final').textContent = Math.floor(state.score);
     document.getElementById('cg-final-level').textContent = state.level;
     document.getElementById('cg-playfield').classList.remove('danger');
@@ -172,18 +247,27 @@
     if (window.cgLeaderboard && typeof window.cgLeaderboard.showSubmitForm === 'function') {
       window.cgLeaderboard.showSubmitForm();
     }
+    if (window.cgLeaderboard && typeof window.cgLeaderboard.renderMini === 'function') {
+      window.cgLeaderboard.renderMini();
+    }
   }
 
   function reset() {
+    if (state.intermissionTimerId) {
+      clearTimeout(state.intermissionTimerId);
+    }
     Object.assign(state, {
       score: 0, caffeine: 5, drinkCooldown: 0, clickCooldown: 0,
       adenosines: [], pendingCaffeine: [], adenosineNextSpawn: 2000,
       level: 1, levelIdx: 0, levelStartTime: 0,
       alertnessTimer: 0, gameTime: 0, gameOver: false, lastFrameTime: 0,
       receptors: [],
+      intermission: false, intermissionStart: 0, intermissionNextIdx: 0,
+      intermissionTimerId: null,
     });
     document.getElementById('cg-level').textContent = '1';
     document.getElementById('cg-overlay').classList.remove('show');
+    document.getElementById('cg-intermission').classList.remove('show');
     rebuildReceptors();
     if (state.rafId) cancelAnimationFrame(state.rafId);
     state.rafId = requestAnimationFrame(tick);
@@ -192,11 +276,26 @@
 
   function tick(t) {
     if (state.gameOver) return;
+
+    // Inter-level intermission: keep the RAF loop alive to drive the timer
+    // bar, but freeze gameplay (no dt accumulation, no spawns, no decay).
+    if (state.intermission) {
+      state.lastFrameTime = t;
+      updateIntermissionTimer();
+      state.rafId = requestAnimationFrame(tick);
+      return;
+    }
+
     const dt = state.lastFrameTime ? Math.min(t - state.lastFrameTime, 50) : 16;
     state.lastFrameTime = t;
     state.gameTime += dt;
 
     maybeAdvanceLevel();
+    if (state.intermission) {
+      // maybeAdvanceLevel just entered intermission this frame — bail out
+      state.rafId = requestAnimationFrame(tick);
+      return;
+    }
 
     state.adenosines.forEach(a => {
       a.elapsed += dt;
@@ -339,8 +438,55 @@
     } else {
       warnEl.classList.remove('show');
     }
+
+    // Cooldown ring around the dispenser. Drains as click cooldown ticks down.
+    const ring = document.getElementById('cg-cooldown-ring');
+    if (ring) {
+      const cdPct = state.clickCooldown / state.clickCooldownMax;
+      const offset = (1 - cdPct) * COOLDOWN_RING_CIRCUMFERENCE;
+      ring.setAttribute('stroke-dashoffset', offset.toFixed(1));
+    }
+
+    // Level countdown bar (hidden on the infinite final level).
+    const lvlTimerWrap = document.getElementById('cg-level-timer-wrap');
+    const lvlTimerFill = document.getElementById('cg-level-timer');
+    if (lvlTimerWrap && lvlTimerFill) {
+      const curLvl = LEVELS[state.levelIdx];
+      if (curLvl.durationMs > 1e8) {
+        lvlTimerWrap.classList.add('hidden');
+      } else {
+        lvlTimerWrap.classList.remove('hidden');
+        const elapsed = state.gameTime - state.levelStartTime;
+        const pct = Math.min(100, Math.max(0, (elapsed / curLvl.durationMs) * 100));
+        lvlTimerFill.style.width = pct.toFixed(1) + '%';
+      }
+    }
   }
 
+  // Welcome modal — shown on first visit only (localStorage flag).
+  function initWelcomeModal() {
+    const overlay = document.getElementById('cg-welcome');
+    const cta     = document.getElementById('cg-welcome-cta');
+    if (!overlay || !cta) return;
+
+    let seen = false;
+    try { seen = localStorage.getItem('cgSeenWelcome') === '1'; } catch (_) {}
+    if (!seen) overlay.hidden = false;
+
+    cta.addEventListener('click', () => {
+      overlay.hidden = true;
+      try { localStorage.setItem('cgSeenWelcome', '1'); } catch (_) {}
+    });
+  }
+
+  // Intermission Skip button.
+  function initIntermissionControls() {
+    const skipBtn = document.getElementById('cg-int-skip');
+    if (skipBtn) skipBtn.addEventListener('click', exitIntermission);
+  }
+
+  initWelcomeModal();
+  initIntermissionControls();
   buildBackground();
   rebuildReceptors();
   showBanner('Level 1', LEVELS[0].name);

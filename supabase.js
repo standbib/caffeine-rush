@@ -119,9 +119,47 @@ async function refresh() {
     if (notConfigured) { renderEmpty('Leaderboard coming soon.'); return; }
     if (error) { renderError(); return; }
     renderRows(data);
+    // Keep the in-modal mini list in sync with the main board.
+    if (data) renderMiniFromRows(data.slice(0, 3));
   } finally {
     if (refreshBtn) refreshBtn.disabled = false;
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Mini leaderboard inside the game-over overlay
+// ─────────────────────────────────────────────────────────────────────────
+
+const miniListEl = document.getElementById('cg-leaderboard-mini-list');
+const miniWrapEl = document.getElementById('cg-leaderboard-mini');
+
+function renderMiniFromRows(rows) {
+  if (!miniListEl) return;
+  if (!rows || rows.length === 0) {
+    miniListEl.innerHTML = '<li class="leaderboard-mini-empty">No scores yet — be the first.</li>';
+    return;
+  }
+  miniListEl.innerHTML = rows.map((row, i) => `
+    <li>
+      <span class="lm-rank">#${i + 1}</span>
+      <span class="lm-name">${escapeHtml(row.name)}</span>
+      <span class="lm-score">${row.score.toLocaleString()}</span>
+    </li>`).join('');
+}
+
+async function renderMini() {
+  if (!isConfigured) {
+    if (miniWrapEl) miniWrapEl.classList.add('hidden');
+    return;
+  }
+  if (miniWrapEl) miniWrapEl.classList.remove('hidden');
+  if (miniListEl) miniListEl.innerHTML = '<li class="leaderboard-mini-empty">Loading…</li>';
+  const { data, error } = await fetchTopScores(3);
+  if (error || !data) {
+    if (miniListEl) miniListEl.innerHTML = '<li class="leaderboard-mini-empty">Couldn\'t load.</li>';
+    return;
+  }
+  renderMiniFromRows(data);
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -192,6 +230,7 @@ if (refreshBtn) {
 
 window.cgLeaderboard = {
   refresh,
+  renderMini,
   showSubmitForm,
   isConfigured,
 };

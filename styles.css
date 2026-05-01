@@ -301,10 +301,10 @@ button:disabled {
   .bg-drift-4 { animation: bgD4 4.6s ease-in-out infinite; transform-origin: center; }
   #cg-dispenser-pulse { animation: bgPulse 1.6s ease-in-out infinite; }
 }
-.cgame-bottom { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 0 4px; font-size: 13px; color: var(--color-text-secondary); flex-wrap: wrap; }
+.cgame-bottom { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; padding: 0 4px; font-size: 13px; color: var(--color-text-secondary); flex-wrap: wrap; }
 .cgame-mug-svg { flex-shrink: 0; color: var(--color-text-primary); }
 .cgame-mug-liquid { transition: transform 0.4s ease; transform-origin: 0 0; }
-.cgame-drink { margin-left: auto; }
+.cgame-drink { /* centered with the rest */ }
 .cgame-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius-lg); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
 .cgame-overlay.show { opacity: 1; pointer-events: auto; }
 .cgame-overlay-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 20px 28px; text-align: center; border: 0.5px solid var(--color-border-tertiary); min-width: 220px; }
@@ -490,4 +490,376 @@ button:disabled {
     padding: 9px 12px;
   }
   .leaderboard-level { display: none; }
+}
+
+/* =========================================================
+   Welcome modal — full-page overlay shown on first visit
+   ========================================================= */
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 20, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+  animation: welcomeFade 0.25s ease-out both;
+}
+
+.welcome-overlay[hidden] { display: none; }
+
+@keyframes welcomeFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.welcome-card {
+  background: var(--color-background-primary);
+  border-radius: var(--border-radius-lg);
+  padding: 32px 28px 24px;
+  max-width: 440px;
+  width: 100%;
+  border: 0.5px solid var(--color-border-tertiary);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+
+.welcome-title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 500;
+  margin: 0 0 4px;
+  color: var(--color-text-primary);
+  letter-spacing: -0.4px;
+}
+
+.welcome-sub {
+  margin: 0 0 18px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.welcome-list {
+  margin: 0 0 22px;
+  padding: 0 0 0 20px;
+  color: var(--color-text-primary);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.welcome-list li { margin-bottom: 8px; }
+.welcome-list li:last-child { margin-bottom: 0; }
+
+.welcome-list .caf-pip,
+.welcome-list .aden-pip {
+  font-weight: 500;
+  border-radius: 3px;
+  padding: 0 4px;
+  color: var(--color-background-primary);
+}
+.welcome-list .caf-pip   { background: #D85A30; }
+.welcome-list .aden-pip  { background: #7F77DD; }
+
+.welcome-cta {
+  width: 100%;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 16px;
+  background: var(--color-text-primary);
+  color: var(--color-background-primary);
+  border: 0.5px solid var(--color-text-primary);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.welcome-cta:hover { opacity: 0.85; }
+
+/* =========================================================
+   Tip prompt — kiosk POS-style "Leave a tip?"
+   ========================================================= */
+.tip-prompt {
+  background: var(--color-background-primary);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-lg);
+  padding: 24px 22px 18px;
+  text-align: center;
+  box-shadow: 0 1px 0 var(--color-border-tertiary);
+}
+
+.tip-prompt-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin: 0 0 14px;
+}
+
+.tip-prompt-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tip-btn,
+.tip-btn-custom {
+  display: block;
+  text-decoration: none;
+  font-family: var(--font-sans);
+  text-align: center;
+  padding: 14px 8px;
+  background: var(--color-text-info);
+  color: #fff;
+  border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-text-info);
+  transition: background 0.15s, transform 0.05s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tip-btn:hover,
+.tip-btn-custom:hover { background: #214c80; }
+
+.tip-btn:active,
+.tip-btn-custom:active { transform: translateY(1px); }
+
+.tip-btn-pct {
+  display: block;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+.tip-btn-amt {
+  display: block;
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.tip-btn-custom {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 8px;
+}
+
+.tip-prompt-hint {
+  margin: 14px 0 0;
+  font-style: italic;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  opacity: 0.75;
+}
+
+/* =========================================================
+   Level countdown bar (in HUD area)
+   ========================================================= */
+.cgame-level-timer-wrap {
+  height: 2px;
+  background: var(--color-background-secondary);
+  border-radius: 1px;
+  overflow: hidden;
+  margin: 0 0 10px;
+  transition: opacity 0.2s;
+}
+
+.cgame-level-timer-wrap.hidden { opacity: 0; pointer-events: none; }
+
+.cgame-level-timer {
+  height: 100%;
+  width: 0;
+  background: var(--color-text-secondary);
+  opacity: 0.4;
+  transition: width 0.25s linear;
+}
+
+/* =========================================================
+   Inter-level intermission overlay
+   ========================================================= */
+.cgame-intermission {
+  /* extends .cgame-overlay - already positioned absolute, hidden */
+}
+
+.intermission-card {
+  min-width: 280px;
+  max-width: 420px;
+}
+
+.intermission-level {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.intermission-name {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 14px;
+  letter-spacing: -0.2px;
+}
+
+.intermission-fact {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-primary);
+  margin: 0 0 18px;
+  font-style: italic;
+}
+
+.intermission-timer {
+  height: 3px;
+  background: var(--color-background-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.intermission-timer-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--color-text-primary);
+  transition: width 0.1s linear;
+}
+
+.intermission-skip {
+  font-size: 13px;
+}
+
+/* =========================================================
+   Mini leaderboard (inside game-over overlay)
+   ========================================================= */
+.leaderboard-mini {
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 10px 12px;
+  margin: 10px 0 4px;
+  text-align: left;
+}
+
+.leaderboard-mini-head {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.leaderboard-mini-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.leaderboard-mini-list li {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.leaderboard-mini-list li + li {
+  border-top: 0.5px solid var(--color-border-tertiary);
+}
+
+.leaderboard-mini-list .lm-rank {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.leaderboard-mini-list .lm-name {
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-mini-list .lm-score {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  font-size: 13px;
+}
+
+.leaderboard-mini-empty {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  padding: 6px 0;
+  display: block !important;
+  grid-template-columns: none !important;
+}
+
+.leaderboard-mini.hidden { display: none; }
+
+/* =========================================================
+   Collapsible "How to play" (replaces section.how-to)
+   ========================================================= */
+.how-to-details {
+  border-top: 0.5px solid var(--color-border-tertiary);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  padding: 14px 0;
+  /* override default .page > section margin so it stays consistent */
+  margin-top: 40px;
+}
+
+.how-to-details > summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.how-to-details > summary::-webkit-details-marker { display: none; }
+
+.how-to-details > summary::before {
+  content: "▶";
+  display: inline-block;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  transition: transform 0.2s;
+}
+
+.how-to-details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.how-to-details ul {
+  margin: 12px 0 0;
+  padding: 0 0 0 20px;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.how-to-details li { margin-bottom: 6px; }
+.how-to-details li:last-child { margin-bottom: 0; }
+
+/* =========================================================
+   Mobile tweaks
+   ========================================================= */
+@media (max-width: 480px) {
+  .tip-prompt { padding: 20px 16px 14px; }
+  .tip-btn { padding: 12px 4px; }
+  .tip-btn-pct { font-size: 18px; }
+
+  .welcome-card {
+    padding: 24px 22px 20px;
+  }
+  .welcome-title { font-size: 24px; }
 }

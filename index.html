@@ -21,6 +21,21 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
+  <!-- Welcome modal: shown on first visit only (localStorage cgSeenWelcome) -->
+  <div class="welcome-overlay" id="cg-welcome" hidden>
+    <div class="welcome-card">
+      <h2 class="welcome-title">Caffeine Rush</h2>
+      <p class="welcome-sub">Defend the adenosine receptors. Don't fall asleep.</p>
+      <ul class="welcome-list">
+        <li>Click empty receptors to dock <span class="caf-pip">caffeine</span> before <span class="aden-pip">adenosine</span> binds.</li>
+        <li>If more than half the receptors block out for 5 seconds straight, you're asleep.</li>
+        <li>Hit <strong>Drink</strong> to refill the mug (8 second cooldown).</li>
+      </ul>
+      <button type="button" class="welcome-cta" id="cg-welcome-cta">Got it — let me play</button>
+    </div>
+  </div>
+
   <main class="page">
     <header class="page-header">
       <h1>Caffeine Rush</h1>
@@ -39,6 +54,10 @@
           <div class="cgame-bar-threshold"></div>
         </div>
         <span id="cg-state" class="cgame-state">Alert</span>
+      </div>
+
+      <div class="cgame-level-timer-wrap" aria-hidden="true">
+        <div class="cgame-level-timer" id="cg-level-timer"></div>
       </div>
 
       <div class="cgame-arena">
@@ -66,6 +85,10 @@
           <text class="ts" x="660" y="329" text-anchor="end">Neuron membrane</text>
 
           <circle id="cg-dispenser-pulse" cx="340" cy="368" r="6" fill="#D85A30" opacity="0.4"/>
+          <circle id="cg-cooldown-ring" cx="340" cy="368" r="9"
+                  fill="none" stroke="#D85A30" stroke-width="1.5"
+                  stroke-dasharray="56.5" stroke-dashoffset="56.5"
+                  transform="rotate(-90 340 368)" opacity="0.85"/>
           <circle id="cg-dispenser" cx="340" cy="368" r="3" fill="#D85A30" opacity="0.9"/>
 
           <g id="cg-adenosine-layer"></g>
@@ -74,10 +97,32 @@
 
         <div class="cgame-warn" id="cg-warn">Falling asleep in 5.0s</div>
         <div class="cgame-banner" id="cg-banner"></div>
+
+        <!-- Inter-level intermission overlay -->
+        <div class="cgame-overlay cgame-intermission" id="cg-intermission">
+          <div class="cgame-overlay-card intermission-card">
+            <div class="intermission-level" id="cg-int-level">Level 2</div>
+            <div class="intermission-name" id="cg-int-name">Afternoon slump</div>
+            <p class="intermission-fact" id="cg-int-fact"></p>
+            <div class="intermission-timer">
+              <div class="intermission-timer-fill" id="cg-int-timer-fill"></div>
+            </div>
+            <button type="button" class="intermission-skip" id="cg-int-skip">Skip</button>
+          </div>
+        </div>
+
+        <!-- Game-over overlay -->
         <div class="cgame-overlay" id="cg-overlay">
           <div class="cgame-overlay-card">
             <div class="cgame-overlay-title">You fell asleep</div>
             <div class="cgame-overlay-sub">Reached level <strong id="cg-final-level">1</strong> with score <strong id="cg-final">0</strong></div>
+
+            <div class="leaderboard-mini" id="cg-leaderboard-mini" aria-label="Top scores">
+              <div class="leaderboard-mini-head">Top scores</div>
+              <ol class="leaderboard-mini-list" id="cg-leaderboard-mini-list">
+                <li class="leaderboard-mini-empty">Loading…</li>
+              </ol>
+            </div>
 
             <form class="cgame-submit" id="cg-submit-form" autocomplete="off">
               <input
@@ -111,6 +156,33 @@
       </div>
     </div>
 
+    <!-- Kiosk-style tip prompt — moved up from footer, replaces BMC button -->
+    <aside class="tip-prompt" aria-label="Leave a tip">
+      <p class="tip-prompt-label">Leave a tip?</p>
+      <div class="tip-prompt-row">
+        <a class="tip-btn" href="https://www.buymeacoffee.com/ianstandbridge?coffees=1" target="_blank" rel="noopener">
+          <span class="tip-btn-pct">15%</span>
+          <span class="tip-btn-amt">$1</span>
+        </a>
+        <a class="tip-btn" href="https://www.buymeacoffee.com/ianstandbridge?coffees=3" target="_blank" rel="noopener">
+          <span class="tip-btn-pct">20%</span>
+          <span class="tip-btn-amt">$3</span>
+        </a>
+        <a class="tip-btn" href="https://www.buymeacoffee.com/ianstandbridge?coffees=5" target="_blank" rel="noopener">
+          <span class="tip-btn-pct">25%</span>
+          <span class="tip-btn-amt">$5</span>
+        </a>
+      </div>
+      <a class="tip-btn-custom" href="https://www.buymeacoffee.com/ianstandbridge" target="_blank" rel="noopener">Custom</a>
+      <p class="tip-prompt-hint">there is no purchase to tip on. that's the joke.</p>
+    </aside>
+
+    <aside class="ad-slot" aria-label="Sponsored (joke ad slot)">
+      <p>Your ad could be here. Email <a href="mailto:istand34@gmail.com">istand34@gmail.com</a>.</p>
+      <p>Pricing: whatever you'll pay.</p>
+      <p>Current sponsors: nobody (Luke is welcome to claim this).</p>
+    </aside>
+
     <section class="leaderboard" aria-label="Leaderboard">
       <div class="leaderboard-head">
         <h2>Leaderboard</h2>
@@ -121,29 +193,19 @@
       </ol>
     </section>
 
-    <aside class="ad-slot" aria-label="Sponsored (joke ad slot)">
-      <p>Your ad could be here. Email <a href="mailto:istand34@gmail.com">istand34@gmail.com</a>.</p>
-      <p>Pricing: whatever you'll pay.</p>
-      <p>Current sponsors: nobody (Luke is welcome to claim this).</p>
-    </aside>
-
-    <section class="how-to">
-      <h2>How to play</h2>
-      <ul>
-        <li>Click empty receptors to dock caffeine before adenosine binds.</li>
-        <li>Don't let more than half the receptors block out for 5 seconds.</li>
-        <li>Drink to refill the mug (8 second cooldown).</li>
-      </ul>
-    </section>
-
     <section class="how-it-works">
       <h2>How caffeine actually works</h2>
       <p>While you're awake, your brain produces a molecule called adenosine. It slowly builds up and binds to receptors that signal "you're tired." Caffeine has a shape similar enough to adenosine that it can dock at the same receptors first, blocking adenosine from binding. You don't actually feel more energized &mdash; you just feel less tired. Eventually adenosine wins, the caffeine wears off, and you crash. Hence: another cup.</p>
     </section>
 
-    <div class="bmc-wrap">
-      <a href="https://www.buymeacoffee.com/ianstandbridge" class="bmc-link" target="_blank" rel="noopener">&#9749; buy me a coffee</a>
-    </div>
+    <details class="how-to-details">
+      <summary>How to play</summary>
+      <ul>
+        <li>Click empty receptors to dock caffeine before adenosine binds.</li>
+        <li>Don't let more than half the receptors block out for 5 seconds.</li>
+        <li>Drink to refill the mug (8 second cooldown).</li>
+      </ul>
+    </details>
 
     <footer class="page-footer">
       <a href="https://ianstandbridge.com">&larr; ianstandbridge.com</a>
