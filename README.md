@@ -1,16 +1,16 @@
 # Caffeine Rush
 
-A small browser arcade where you click empty receptors to dock caffeine before drifting adenosine binds them. Score accumulates while caffeine is held. Lose if more than half the receptors are adenosine-blocked for 5 consecutive seconds.
+Click empty adenosine receptors to dock caffeine before drifting adenosine binds them. Score accumulates while caffeine is held. You lose if more than half the receptors are adenosine-blocked for 5 consecutive seconds.
 
-Live at **caffeine.ianstandbridge.com** (after first deploy).
+**Play:** https://caffeine.ianstandbridge.com
 
 ## Origin
 
-Some coworkers got curious about how caffeine actually works at the molecular level. We built an interactive diagram with Claude, then turned the diagram into a game. A friend (Luke McSween) bet it couldn't be monetized. This site is the response — a polished, half-serious attempt to monetize it anyway.
+Some coworkers got curious how caffeine actually works at the molecular level. We built an interactive diagram with Claude, then turned the diagram into a game. A friend (Luke McSween) bet it couldn't be monetized — this site is the (half-serious) response.
 
 ## Stack
 
-Vanilla HTML / CSS / JS. No framework, no build step, no npm. Vercel for static hosting. Supabase added in Sprint 2 for the leaderboard.
+Vanilla HTML / CSS / JS. No framework, no build step, no npm. Vercel for static hosting.
 
 ## Run locally
 
@@ -22,13 +22,17 @@ Then open http://localhost:8000.
 
 ## Files
 
-- `index.html` — landing wrapper, game container, joke ad slot, educational copy, BMC link, footer
+- `index.html` — landing wrapper, game, joke ad slot, "How caffeine actually works", BMC link
 - `styles.css` — `:root` design tokens + game styles + landing styles
 - `game.js` — game logic (IIFE), extracted verbatim from the original single-file artifact
 - `public/favicon.svg` — caffeine-molecule favicon
-- `_input/` — original single-file source kept as reference (not deployed)
-- `CLAUDE.md` — project rules and constraints for Claude Code sessions
+- `_input/` — original single-file source kept as reference (not used at runtime)
+- `CLAUDE.md` — notes for contributors using Claude Code
 
-## Attribution
+## Tip jar
 
-Game and site by Ian Standbridge. Built with Claude.
+If the game made you smile: <https://www.buymeacoffee.com/ianstandbridge>
+
+## License
+
+[MIT](./LICENSE)
