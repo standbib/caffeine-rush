@@ -17,6 +17,14 @@ const SUPABASE_ANON_KEY = 'sb_publishable_I4hUtZIYs0GJ3wY0fpacFg_PhPK6abP';
 const TOP_N = 10;
 const NAME_STORAGE_KEY = 'cgLastName';
 
+function detectPlatform() {
+  try {
+    return window.matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop';
+  } catch (_) {
+    return null;
+  }
+}
+
 const isConfigured =
   SUPABASE_URL.startsWith('https://') &&
   SUPABASE_ANON_KEY.length > 40;
@@ -38,7 +46,7 @@ async function fetchTopScores(limit = TOP_N) {
   if (!supabase) return { data: [], notConfigured: true };
   const { data, error } = await supabase
     .from('scores')
-    .select('id, name, score, level_reached, created_at')
+    .select('id, name, score, level_reached, platform, created_at')
     .order('score', { ascending: false })
     .order('created_at', { ascending: true })
     .limit(limit);
@@ -54,10 +62,16 @@ async function submitScore({ name, score, level }) {
 
   const safeScore = Math.max(0, Math.min(50000, Math.floor(Number(score) || 0)));
   const safeLevel = Math.max(1, Math.min(3, Math.floor(Number(level) || 1)));
+  const platform = detectPlatform();
 
   const { data, error } = await supabase
     .from('scores')
-    .insert({ name: cleanName, score: safeScore, level_reached: safeLevel })
+    .insert({
+      name: cleanName,
+      score: safeScore,
+      level_reached: safeLevel,
+      platform: platform,
+    })
     .select('id')
     .single();
   if (error) return { error };
@@ -92,6 +106,12 @@ function renderError(message = "Couldn't load the leaderboard.") {
   listEl.innerHTML = `<li class="leaderboard-error">${escapeHtml(message)}</li>`;
 }
 
+function platformPip(platform) {
+  if (platform === 'mobile')  return '<span class="leaderboard-platform pf-m" title="Mobile">M</span>';
+  if (platform === 'desktop') return '<span class="leaderboard-platform pf-d" title="Desktop">D</span>';
+  return '<span class="leaderboard-platform pf-unknown" title="Unknown"></span>';
+}
+
 function renderRows(rows) {
   if (!rows || rows.length === 0) { renderEmpty(); return; }
   listEl.innerHTML = rows.map((row, i) => {
@@ -105,6 +125,7 @@ function renderRows(rows) {
       <li class="${cls}">
         <span class="leaderboard-rank">#${rank}</span>
         <span class="leaderboard-name">${escapeHtml(row.name)}</span>
+        ${platformPip(row.platform)}
         <span class="leaderboard-level">L${row.level_reached}</span>
         <span class="leaderboard-score">${row.score.toLocaleString()}</span>
       </li>`;
@@ -143,6 +164,7 @@ function renderMiniFromRows(rows) {
     <li>
       <span class="lm-rank">#${i + 1}</span>
       <span class="lm-name">${escapeHtml(row.name)}</span>
+      ${platformPip(row.platform)}
       <span class="lm-score">${row.score.toLocaleString()}</span>
     </li>`).join('');
 }

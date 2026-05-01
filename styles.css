@@ -465,7 +465,7 @@ button:disabled {
 
 .leaderboard-list li {
   display: grid;
-  grid-template-columns: 36px 1fr auto auto;
+  grid-template-columns: 36px 1fr auto auto auto;
   gap: 12px;
   align-items: baseline;
   padding: 10px 14px;
@@ -523,9 +523,41 @@ button:disabled {
   background: var(--color-background-warning);
 }
 
+/* Platform pip — small mono letter pill ("M" for mobile, "D" for desktop) */
+.leaderboard-platform {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 0.5px solid var(--color-border-tertiary);
+  color: var(--color-text-secondary);
+  background: var(--color-background-secondary);
+}
+.leaderboard-platform.pf-m {
+  color: var(--color-text-info);
+  background: var(--color-background-info);
+  border-color: var(--color-background-info);
+}
+.leaderboard-platform.pf-d {
+  color: var(--color-text-secondary);
+  background: var(--color-background-secondary);
+  border-color: var(--color-border-tertiary);
+}
+.leaderboard-platform.pf-unknown {
+  /* legacy rows with no platform info — show a tiny dash so the cell isn't empty */
+  border: none;
+  background: transparent;
+}
+.leaderboard-platform.pf-unknown::after { content: "·"; color: var(--color-border-secondary); }
+
 @media (max-width: 480px) {
   .leaderboard-list li {
-    grid-template-columns: 28px 1fr auto;
+    grid-template-columns: 28px 1fr auto auto;
     gap: 10px;
     padding: 9px 12px;
   }
@@ -799,7 +831,7 @@ button:disabled {
 
 .leaderboard-mini-list li {
   display: grid;
-  grid-template-columns: 22px 1fr auto;
+  grid-template-columns: 22px 1fr auto auto;
   gap: 10px;
   align-items: baseline;
   padding: 4px 0;

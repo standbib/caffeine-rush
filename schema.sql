@@ -13,8 +13,25 @@ create table if not exists public.scores (
                 ),
   score         integer not null check (score between 0 and 50000),
   level_reached integer not null check (level_reached between 1 and 3),
+  platform      text check (platform is null or platform in ('mobile', 'desktop')),
   created_at    timestamptz not null default now()
 );
+
+-- Migration: add platform column to existing tables (idempotent).
+alter table public.scores
+  add column if not exists platform text;
+
+do $$ begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.scores'::regclass
+      and conname  = 'scores_platform_check'
+  ) then
+    alter table public.scores
+      add constraint scores_platform_check
+      check (platform is null or platform in ('mobile', 'desktop'));
+  end if;
+end $$;
 
 -- Index for the "top N" query
 create index if not exists scores_top_idx
@@ -44,7 +61,7 @@ create policy "scores_insert_anon"
 -- ──────────────────────────────────────────────────────────────────────────
 
 create or replace view public.scores_top10 as
-select id, name, score, level_reached, created_at
+select id, name, score, level_reached, platform, created_at
 from public.scores
 order by score desc, created_at asc
 limit 10;
