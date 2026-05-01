@@ -63,15 +63,29 @@
 
     <div class="cgame">
       <div class="cgame-hud">
-        <span>Score <strong id="cg-score">0</strong></span>
-        <span>Day <strong id="cg-day">1</strong></span>
-        <span>Level <strong id="cg-level">1</strong></span>
-        <span>Alertness</span>
-        <div class="cgame-bar">
-          <div id="cg-bar-fill" class="cgame-bar-fill"></div>
-          <div class="cgame-bar-threshold"></div>
+        <div class="cgame-hud-stats">
+          <span class="cgame-stat cgame-stat-score">
+            <span class="cgame-stat-label">Score</span>
+            <strong id="cg-score">0</strong>
+          </span>
+          <span class="cgame-stat-divider" aria-hidden="true">·</span>
+          <span class="cgame-stat">
+            <span class="cgame-stat-label">Day</span>
+            <strong id="cg-day">1</strong>
+          </span>
+          <span class="cgame-stat-divider" aria-hidden="true">·</span>
+          <span class="cgame-stat">
+            <span class="cgame-stat-label">Level</span>
+            <strong id="cg-level">1</strong>
+          </span>
         </div>
-        <span id="cg-state" class="cgame-state">Alert</span>
+        <div class="cgame-hud-status">
+          <span id="cg-state" class="cgame-state">Alert</span>
+          <div class="cgame-bar" aria-label="Alertness">
+            <div id="cg-bar-fill" class="cgame-bar-fill"></div>
+            <div class="cgame-bar-threshold"></div>
+          </div>
+        </div>
       </div>
 
       <div class="cgame-level-timer-wrap" aria-hidden="true">
