@@ -498,49 +498,99 @@
     if (skipBtn) skipBtn.addEventListener('click', exitIntermission);
   }
 
-  // Share button — uses Web Share API (mobile + Safari/Chrome desktop),
-  // falls back to clipboard + visual confirmation, then to a final prompt().
+  // Share button — chain: Web Share API → clipboard → in-page modal.
+  // Every successful path produces visible feedback. No silent failures.
   function initShareButton() {
     const btn = document.getElementById('cg-share-btn');
     if (!btn) return;
-    btn.addEventListener('click', async () => {
+
+    const labelEl = btn.querySelector('span') || btn;
+    const flashCopied = (msg) => {
+      const orig = labelEl.textContent;
+      labelEl.textContent = msg || 'Link copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        labelEl.textContent = orig;
+        btn.classList.remove('copied');
+      }, 1800);
+    };
+
+    function buildPayload() {
       const score = document.getElementById('cg-final').textContent || '0';
       const level = document.getElementById('cg-final-level').textContent || '1';
       const text  = "I scored " + score + " on Caffeine Rush — made it to Level " + level + " before falling asleep. Beat my score:";
       const url   = 'https://caffeine.ianstandbridge.com';
+      return { text: text, url: url, full: text + ' ' + url };
+    }
 
+    btn.addEventListener('click', async () => {
+      const p = buildPayload();
+
+      // 1. Web Share API (iOS Safari, Android, recent desktop Chrome/Safari/Edge)
       if (navigator.share) {
         try {
-          await navigator.share({ title: 'Caffeine Rush', text: text, url: url });
+          await navigator.share({ title: 'Caffeine Rush', text: p.text, url: p.url });
+          console.debug('[share] used Web Share API');
           return;
         } catch (e) {
-          if (e && e.name === 'AbortError') return; // user cancelled, no-op
-          // any other error → fall through to clipboard fallback
+          if (e && e.name === 'AbortError') {
+            console.debug('[share] user cancelled Web Share sheet');
+            return;
+          }
+          console.debug('[share] Web Share failed, falling through:', e && e.message);
+          // any other error → fall through to clipboard
         }
       }
 
-      const payload = text + ' ' + url;
-      const flashCopied = () => {
-        const orig = btn.textContent;
-        btn.textContent = 'Link copied';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = orig;
-          btn.classList.remove('copied');
-        }, 1800);
-      };
+      // 2. Clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(p.full);
+          console.debug('[share] copied via Clipboard API');
+          flashCopied();
+          return;
+        } catch (e) {
+          console.debug('[share] Clipboard API failed, falling through:', e && e.message);
+        }
+      }
 
+      // 3. In-page modal with textarea + Copy button
+      console.debug('[share] using in-page fallback modal');
+      openShareFallbackModal(p.full, flashCopied);
+    });
+  }
+
+  function openShareFallbackModal(payload, onCopySuccess) {
+    const overlay = document.getElementById('cg-share-fallback');
+    const ta      = document.getElementById('cg-share-fallback-text');
+    const copyBtn = document.getElementById('cg-share-fallback-copy');
+    const doneBtn = document.getElementById('cg-share-fallback-done');
+    if (!overlay || !ta || !copyBtn || !doneBtn) return;
+
+    ta.value = payload;
+    overlay.hidden = false;
+    setTimeout(() => { ta.select(); ta.setSelectionRange(0, ta.value.length); }, 50);
+
+    const close = () => { overlay.hidden = true; };
+    const copy = async () => {
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(payload);
-          flashCopied();
-          return;
+        } else {
+          ta.select();
+          document.execCommand && document.execCommand('copy');
         }
-      } catch (_) { /* fall through */ }
+        const orig = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = orig; }, 1500);
+        if (typeof onCopySuccess === 'function') onCopySuccess('Link copied!');
+      } catch (_) {
+        // user can still select+copy manually
+      }
+    };
 
-      // Last resort
-      window.prompt('Copy your share text:', payload);
-    });
+    copyBtn.onclick = copy;
+    doneBtn.onclick = close;
   }
 
   initWelcomeModal();

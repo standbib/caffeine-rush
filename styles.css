@@ -394,6 +394,9 @@ button:disabled {
 }
 
 .cgame-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   background: var(--color-text-primary);
   color: var(--color-background-primary);
@@ -407,6 +410,10 @@ button:disabled {
 .cgame-share.copied {
   background: var(--color-text-success);
   border-color: var(--color-text-success);
+}
+.cgame-share-icon {
+  display: block;
+  flex-shrink: 0;
 }
 
 .cgame-play-again {
@@ -555,20 +562,22 @@ button:disabled {
   background: var(--color-background-warning);
 }
 
-/* Platform pip — small mono letter pill ("M" for mobile, "D" for desktop) */
+/* Platform pip — small icon pill (phone outline = mobile, monitor outline = desktop) */
 .leaderboard-platform {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
   border: 0.5px solid var(--color-border-tertiary);
   color: var(--color-text-secondary);
   background: var(--color-background-secondary);
+}
+.leaderboard-platform svg {
+  display: block;
+  width: 13px;
+  height: 13px;
 }
 .leaderboard-platform.pf-m {
   color: var(--color-text-info);
@@ -678,6 +687,61 @@ button:disabled {
 }
 
 .welcome-cta:hover { opacity: 0.85; }
+
+/* =========================================================
+   Share-fallback modal — only shown if Web Share + clipboard both fail
+   ========================================================= */
+.share-fallback-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 20, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 110;
+  padding: 24px;
+  animation: welcomeFade 0.25s ease-out both;
+}
+.share-fallback-overlay[hidden] { display: none; }
+
+.share-fallback-card {
+  background: var(--color-background-primary);
+  border-radius: var(--border-radius-lg);
+  padding: 22px 22px 18px;
+  max-width: 420px;
+  width: 100%;
+  border: 0.5px solid var(--color-border-tertiary);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+
+.share-fallback-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 12px;
+  color: var(--color-text-primary);
+}
+
+.share-fallback-text {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px;
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  resize: none;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.share-fallback-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
 
 /* =========================================================
    Tip prompt — kiosk POS-style "Leave a tip?"
