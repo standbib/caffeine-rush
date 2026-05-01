@@ -78,7 +78,22 @@
           <div class="cgame-overlay-card">
             <div class="cgame-overlay-title">You fell asleep</div>
             <div class="cgame-overlay-sub">Reached level <strong id="cg-final-level">1</strong> with score <strong id="cg-final">0</strong></div>
-            <button onclick="cgReset()">Play again</button>
+
+            <form class="cgame-submit" id="cg-submit-form" autocomplete="off">
+              <input
+                type="text"
+                id="cg-name-input"
+                class="cgame-name-input"
+                placeholder="your name"
+                maxlength="20"
+                required
+                aria-label="Your name for the leaderboard">
+              <button type="submit" id="cg-submit-btn">Submit score</button>
+            </form>
+
+            <div class="cgame-submit-status" id="cg-submit-status"></div>
+
+            <button class="cgame-play-again" onclick="cgReset()">Play again</button>
           </div>
         </div>
       </div>
@@ -95,6 +110,16 @@
         <button class="cgame-drink" id="cg-drink" onclick="cgDrink()">Drink (refill)</button>
       </div>
     </div>
+
+    <section class="leaderboard" aria-label="Leaderboard">
+      <div class="leaderboard-head">
+        <h2>Leaderboard</h2>
+        <button type="button" class="leaderboard-refresh" id="cg-lb-refresh" aria-label="Refresh leaderboard">refresh</button>
+      </div>
+      <ol class="leaderboard-list" id="cg-leaderboard">
+        <li class="leaderboard-empty">Loading…</li>
+      </ol>
+    </section>
 
     <aside class="ad-slot" aria-label="Sponsored (joke ad slot)">
       <p>Your ad could be here. Email <a href="mailto:istand34@gmail.com">istand34@gmail.com</a>.</p>
@@ -125,6 +150,7 @@
     </footer>
   </main>
 
+  <script type="module" src="/supabase.js"></script>
   <script src="/game.js" defer></script>
 </body>
 </html>

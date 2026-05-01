@@ -324,3 +324,170 @@ button:disabled {
   font-size: 11px;
   fill: var(--color-text-secondary);
 }
+
+/* =========================================================
+   Game-over score submit form (inside .cgame-overlay-card)
+   ========================================================= */
+.cgame-submit {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 6px;
+}
+
+.cgame-name-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 6px 10px;
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.cgame-name-input:focus {
+  border-color: var(--color-border-primary);
+}
+
+#cg-submit-btn {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.cgame-submit-status {
+  font-size: 12px;
+  min-height: 18px;
+  margin: 4px 0 8px;
+  color: var(--color-text-secondary);
+}
+
+.cgame-submit-status.success { color: var(--color-text-success); }
+.cgame-submit-status.error   { color: var(--color-text-danger); }
+
+.cgame-submit.hidden { display: none; }
+
+.cgame-play-again {
+  margin-top: 4px;
+}
+
+/* =========================================================
+   Leaderboard
+   ========================================================= */
+.leaderboard-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.leaderboard-head h2 {
+  margin: 0;
+}
+
+.leaderboard-refresh {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.leaderboard-refresh:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-secondary);
+  background: var(--color-background-primary);
+}
+
+.leaderboard-refresh:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.leaderboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-primary);
+  overflow: hidden;
+}
+
+.leaderboard-list li {
+  display: grid;
+  grid-template-columns: 36px 1fr auto auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 14px;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  font-size: 14px;
+}
+
+.leaderboard-list li:last-child { border-bottom: none; }
+
+.leaderboard-rank {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.leaderboard-list li.top1 .leaderboard-rank,
+.leaderboard-list li.top1 .leaderboard-name { color: var(--color-text-primary); font-weight: 500; }
+
+.leaderboard-name {
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-level {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.leaderboard-score {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard-empty,
+.leaderboard-error {
+  display: block !important;
+  grid-template-columns: none !important;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  padding: 20px 14px;
+}
+
+.leaderboard-error { color: var(--color-text-danger); }
+
+.leaderboard-list li.you {
+  background: var(--color-background-warning);
+}
+
+@media (max-width: 480px) {
+  .leaderboard-list li {
+    grid-template-columns: 28px 1fr auto;
+    gap: 10px;
+    padding: 9px 12px;
+  }
+  .leaderboard-level { display: none; }
+}

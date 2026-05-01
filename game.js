@@ -169,6 +169,9 @@
     document.getElementById('cg-final-level').textContent = state.level;
     document.getElementById('cg-playfield').classList.remove('danger');
     document.getElementById('cg-warn').classList.remove('show');
+    if (window.cgLeaderboard && typeof window.cgLeaderboard.showSubmitForm === 'function') {
+      window.cgLeaderboard.showSubmitForm();
+    }
   }
 
   function reset() {
