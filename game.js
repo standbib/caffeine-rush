@@ -2,11 +2,42 @@
   const NS = 'http://www.w3.org/2000/svg';
   const DOCK_Y = 268, SPAWN_Y = 20, ORIGIN_X = 340, ORIGIN_Y = 368;
 
-  const LEVELS = [
-    { positions: [100, 260, 420, 580], spawnStart: 2500, spawnEnd: 1000, halfLife: 8000, sticky: 8000, durationMs: 30000, name: 'Morning' },
-    { positions: [110, 240, 370, 500, 630], spawnStart: 1200, spawnEnd: 700, halfLife: 7000, sticky: 7000, durationMs: 30000, name: 'Afternoon slump' },
-    { positions: [70, 180, 290, 400, 510, 620], spawnStart: 800, spawnEnd: 450, halfLife: 6000, sticky: 6000, durationMs: 9e9, name: 'Late night' },
+  // Base level config — Day 1 baseline. Day 2+ runs the same levels with
+  // tighter spawn rates, faster travel, longer adenosine sticky, and
+  // shorter caffeine half-life. levelConfigForDay() applies the multipliers.
+  //
+  // travelMs replaces the old fixed 4133ms travel time. Slower travel +
+  // wider sticky window made Level 1 unloseable by inactivity; tightening
+  // both turns it into a real "use it or lose it" opening level.
+  const BASE_LEVELS = [
+    { positions: [100, 260, 420, 580],            spawnStart: 1500, spawnEnd: 900, halfLife: 8000, sticky: 8000, durationMs: 30000, travelMs: 1500, name: 'Morning' },
+    { positions: [110, 240, 370, 500, 630],       spawnStart: 1100, spawnEnd: 700, halfLife: 7000, sticky: 7000, durationMs: 30000, travelMs: 1300, name: 'Afternoon slump' },
+    { positions: [70, 180, 290, 400, 510, 620],   spawnStart: 800,  spawnEnd: 500, halfLife: 6000, sticky: 6000, durationMs: 45000, travelMs: 1100, name: 'Late night' },
   ];
+
+  function levelConfigForDay(baseIdx, day) {
+    const base = BASE_LEVELS[baseIdx];
+    const d = Math.max(1, day);
+    const spawnMul    = 1 / Math.pow(1.10, d - 1);
+    const travelMul   = 1 / Math.pow(1.05, d - 1);
+    const stickyMul   = Math.pow(1.05, d - 1);
+    const halfLifeMul = 1 / Math.pow(1.05, d - 1);
+    return {
+      positions:  base.positions,
+      spawnStart: base.spawnStart * spawnMul,
+      spawnEnd:   base.spawnEnd   * spawnMul,
+      halfLife:   base.halfLife   * halfLifeMul,
+      sticky:     base.sticky     * stickyMul,
+      durationMs: base.durationMs,
+      travelMs:   base.travelMs   * travelMul,
+      baseName:   base.name,
+      day:        d,
+    };
+  }
+
+  function currentLevel() {
+    return levelConfigForDay(state.levelIdx, state.day);
+  }
 
   const FACTS = [
     "Caffeine has a half-life of about 5 hours. Half of your noon coffee is still in you at 5pm.",
@@ -31,9 +62,10 @@
     alertnessTimer: 0, alertnessFailMs: 5000,
     gameTime: 0, gameOver: false,
     rafId: null, lastFrameTime: 0,
-    intermission: false, intermissionStart: 0, intermissionNextIdx: 0,
+    intermission: false, intermissionStart: 0, intermissionNextIdx: 0, intermissionNextDay: 1,
     intermissionTimerId: null,
     usedFacts: [],
+    day: 1,
   };
 
   function pickFact() {
@@ -111,7 +143,7 @@
   }
 
   function rebuildReceptors() {
-    const lvl = LEVELS[state.levelIdx];
+    const lvl = currentLevel();
     const old = state.receptors;
     state.receptors = lvl.positions.map((x, i) => ({
       x: x,
@@ -128,7 +160,7 @@
   }
 
   function getSpawnInterval() {
-    const lvl = LEVELS[state.levelIdx];
+    const lvl = currentLevel();
     const elapsed = state.gameTime - state.levelStartTime;
     const t = Math.min(elapsed / Math.min(lvl.durationMs, 30000), 1);
     return lvl.spawnStart + (lvl.spawnEnd - lvl.spawnStart) * t;
@@ -136,27 +168,39 @@
 
   function maybeAdvanceLevel() {
     if (state.intermission || state.gameOver) return;
-    const lvl = LEVELS[state.levelIdx];
+    const lvl = currentLevel();
     const elapsed = state.gameTime - state.levelStartTime;
-    if (state.levelIdx < LEVELS.length - 1 && elapsed >= lvl.durationMs) {
-      enterIntermission(state.levelIdx + 1);
+    if (elapsed < lvl.durationMs) return;
+
+    // Wrap past the last level → next day starts at Level 1.
+    let nextIdx = state.levelIdx + 1;
+    let nextDay = state.day;
+    if (nextIdx >= BASE_LEVELS.length) {
+      nextIdx = 0;
+      nextDay = state.day + 1;
     }
+    enterIntermission(nextIdx, nextDay);
   }
 
-  function enterIntermission(nextIdx) {
+  function enterIntermission(nextIdx, nextDay) {
     state.intermission = true;
     state.intermissionStart = performance.now();
     state.intermissionNextIdx = nextIdx;
+    state.intermissionNextDay = nextDay;
 
     const fact = pickFact();
+    const nextConfig = levelConfigForDay(nextIdx, nextDay);
     const lvlEl  = document.getElementById('cg-int-level');
     const nameEl = document.getElementById('cg-int-name');
     const factEl = document.getElementById('cg-int-fact');
     const overlay = document.getElementById('cg-intermission');
     const timerFill = document.getElementById('cg-int-timer-fill');
 
-    if (lvlEl)  lvlEl.textContent  = 'Level ' + (nextIdx + 1);
-    if (nameEl) nameEl.textContent = LEVELS[nextIdx].name;
+    if (lvlEl) {
+      lvlEl.textContent = 'Level ' + (nextIdx + 1) +
+        (nextDay > 1 ? ' · Day ' + nextDay : '');
+    }
+    if (nameEl) nameEl.textContent = nextConfig.baseName;
     if (factEl) factEl.textContent = fact;
     if (timerFill) timerFill.style.width = '100%';
     if (overlay) overlay.classList.add('show');
@@ -172,26 +216,34 @@
       state.intermissionTimerId = null;
     }
     const nextIdx = state.intermissionNextIdx;
+    const nextDay = state.intermissionNextDay;
     state.intermission = false;
     state.levelIdx = nextIdx;
     state.level = nextIdx + 1;
+    state.day = nextDay;
     state.levelStartTime = state.gameTime;
     state.adenosineNextSpawn = state.gameTime + 800; // brief grace period after intermission
 
     // Fresh slate for the new level. Clear receptor state, any in-flight
     // molecules, and the alertness countdown so a bad spot at the end of
     // the previous level doesn't carry over into the new one. Score, level
-    // number, and the caffeine mug all persist.
+    // number, day, and the caffeine mug all persist.
     state.receptors = [];
     state.adenosines = [];
     state.pendingCaffeine = [];
     state.alertnessTimer = 0;
 
     document.getElementById('cg-level').textContent = state.level;
+    const dayEl = document.getElementById('cg-day');
+    if (dayEl) dayEl.textContent = state.day;
     document.getElementById('cg-intermission').classList.remove('show');
     applyLevelTheme();
     rebuildReceptors();
-    showBanner('Level ' + state.level, LEVELS[state.levelIdx].name);
+    const lvl = currentLevel();
+    showBanner(
+      'Level ' + state.level + (state.day > 1 ? ' · Day ' + state.day : ''),
+      lvl.baseName
+    );
   }
 
   // Time-of-day theming: swap a background class on the playfield SVG so
@@ -225,7 +277,7 @@
     const targetIdx = Math.floor(Math.random() * state.receptors.length);
     const target = state.receptors[targetIdx];
     const startX = Math.max(20, Math.min(660, target.x + (Math.random() - 0.5) * 100));
-    const travelMs = (DOCK_Y - SPAWN_Y) / 60 * 1000;
+    const travelMs = currentLevel().travelMs;
     state.adenosines.push({
       origX: startX, origY: SPAWN_Y, targetX: target.x, targetY: DOCK_Y,
       x: startX, y: SPAWN_Y, travelMs: travelMs, elapsed: 0, target: targetIdx, dead: false,
@@ -264,6 +316,10 @@
     document.getElementById('cg-intermission').classList.remove('show');
     document.getElementById('cg-final').textContent = Math.floor(state.score);
     document.getElementById('cg-final-level').textContent = state.level;
+    const finalDayEl = document.getElementById('cg-final-day');
+    const dayWrapEl  = document.getElementById('cg-final-day-wrap');
+    if (finalDayEl) finalDayEl.textContent = state.day;
+    if (dayWrapEl)  dayWrapEl.hidden = state.day <= 1;
     document.getElementById('cg-playfield').classList.remove('danger');
     document.getElementById('cg-warn').classList.remove('show');
     if (window.cgLeaderboard && typeof window.cgLeaderboard.showSubmitForm === 'function') {
@@ -284,10 +340,13 @@
       level: 1, levelIdx: 0, levelStartTime: 0,
       alertnessTimer: 0, gameTime: 0, gameOver: false, lastFrameTime: 0,
       receptors: [],
-      intermission: false, intermissionStart: 0, intermissionNextIdx: 0,
+      intermission: false, intermissionStart: 0, intermissionNextIdx: 0, intermissionNextDay: 1,
       intermissionTimerId: null,
+      day: 1,
     });
     document.getElementById('cg-level').textContent = '1';
+    const dayEl = document.getElementById('cg-day');
+    if (dayEl) dayEl.textContent = '1';
     document.getElementById('cg-overlay').classList.remove('show');
     document.getElementById('cg-intermission').classList.remove('show');
     applyLevelTheme();
@@ -329,7 +388,7 @@
         const target = state.receptors[a.target];
         if (target && (target.status === 'empty' || target.status === 'pending')) {
           target.status = 'adenosine';
-          target.timer = LEVELS[state.levelIdx].sticky;
+          target.timer = currentLevel().sticky;
         }
         a.dead = true;
       }
@@ -343,7 +402,7 @@
         const target = state.receptors[c.target];
         if (target && target.status === 'pending') {
           target.status = 'caffeine';
-          target.timer = LEVELS[state.levelIdx].halfLife;
+          target.timer = currentLevel().halfLife;
         }
         c.dead = true;
       }
@@ -474,7 +533,7 @@
     const lvlTimerWrap = document.getElementById('cg-level-timer-wrap');
     const lvlTimerFill = document.getElementById('cg-level-timer');
     if (lvlTimerWrap && lvlTimerFill) {
-      const curLvl = LEVELS[state.levelIdx];
+      const curLvl = currentLevel();
       if (curLvl.durationMs > 1e8) {
         lvlTimerWrap.classList.add('hidden');
       } else {
@@ -528,7 +587,10 @@
     function buildPayload() {
       const score = document.getElementById('cg-final').textContent || '0';
       const level = document.getElementById('cg-final-level').textContent || '1';
-      const text  = "I scored " + score + " on Caffeine Rush — made it to Level " + level + " before falling asleep. Beat my score:";
+      const dayEl = document.getElementById('cg-final-day');
+      const day   = dayEl ? parseInt(dayEl.textContent || '1', 10) : 1;
+      const survived = day > 1 ? ('Day ' + day) : ('Level ' + level);
+      const text  = "I scored " + score + " on Caffeine Rush — survived to " + survived + " before falling asleep. Beat my score:";
       const url   = 'https://caffeine.ianstandbridge.com';
       return { text: text, url: url, full: text + ' ' + url };
     }
@@ -609,7 +671,7 @@
   applyLevelTheme();
   buildBackground();
   rebuildReceptors();
-  showBanner('Level 1', LEVELS[0].name);
+  showBanner('Level 1', BASE_LEVELS[0].name);
   render();
   state.rafId = requestAnimationFrame(tick);
 })();
