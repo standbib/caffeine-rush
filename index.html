@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Caffeine Rush</title>
+  <meta name="description" content="A fast SVG arcade game where you defend adenosine receptors. Click to dock caffeine before sleep wins. Plus: how caffeine actually works.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Caffeine Rush">
+  <meta property="og:description" content="A fast SVG arcade game where you defend adenosine receptors. Click to dock caffeine before sleep wins. Plus: how caffeine actually works.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://caffeine.ianstandbridge.com">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Caffeine Rush">
+  <meta name="twitter:description" content="A fast SVG arcade game where you defend adenosine receptors. Click to dock caffeine before sleep wins. Plus: how caffeine actually works.">
+
+  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Caffeine Rush</h1>
+      <p class="tagline">defend the receptors</p>
+    </header>
+
+    <h2 class="sr-only">Caffeine receptor defense game with character molecules and clear sleep countdown</h2>
+
+    <div class="cgame">
+      <div class="cgame-hud">
+        <span>Score <strong id="cg-score">0</strong></span>
+        <span>Level <strong id="cg-level">1</strong></span>
+        <span>Alertness</span>
+        <div class="cgame-bar">
+          <div id="cg-bar-fill" class="cgame-bar-fill"></div>
+          <div class="cgame-bar-threshold"></div>
+        </div>
+        <span id="cg-state" class="cgame-state">Alert</span>
+      </div>
+
+      <div class="cgame-arena">
+        <svg class="cgame-svg" id="cg-playfield" viewBox="0 0 680 380" width="100%" role="img">
+          <title>Caffeine receptor defense playfield</title>
+          <desc>Click empty receptors to dock caffeine before adenosine arrives. Avoid more than half being adenosine-blocked for 5 seconds.</desc>
+          <defs>
+            <pattern id="cg-dot-pattern" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+              <circle cx="16" cy="16" r="0.7" fill="#7F77DD" opacity="0.18"/>
+            </pattern>
+          </defs>
+
+          <rect x="0" y="0" width="680" height="380" fill="url(#cg-dot-pattern)"/>
+          <g id="cg-bg-particles"></g>
+
+          <text class="ts" x="20" y="28">Adenosine drifting in</text>
+          <line x1="0" y1="40" x2="680" y2="40" stroke="var(--color-border-tertiary)" stroke-width="0.5" stroke-dasharray="4 4"/>
+
+          <g id="cg-receptors"></g>
+
+          <rect x="0" y="305" width="680" height="40" fill="#888780" opacity="0.12"/>
+          <g id="cg-membrane-deco" opacity="0.32"></g>
+          <line x1="0" y1="305" x2="680" y2="305" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+          <line x1="0" y1="345" x2="680" y2="345" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+          <text class="ts" x="660" y="329" text-anchor="end">Neuron membrane</text>
+
+          <circle id="cg-dispenser-pulse" cx="340" cy="368" r="6" fill="#D85A30" opacity="0.4"/>
+          <circle id="cg-dispenser" cx="340" cy="368" r="3" fill="#D85A30" opacity="0.9"/>
+
+          <g id="cg-adenosine-layer"></g>
+          <g id="cg-caffeine-layer"></g>
+        </svg>
+
+        <div class="cgame-warn" id="cg-warn">Falling asleep in 5.0s</div>
+        <div class="cgame-banner" id="cg-banner"></div>
+        <div class="cgame-overlay" id="cg-overlay">
+          <div class="cgame-overlay-card">
+            <div class="cgame-overlay-title">You fell asleep</div>
+            <div class="cgame-overlay-sub">Reached level <strong id="cg-final-level">1</strong> with score <strong id="cg-final">0</strong></div>
+            <button onclick="cgReset()">Play again</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cgame-bottom">
+        <svg class="cgame-mug-svg" viewBox="0 0 40 40" width="36" height="36" aria-label="Caffeine mug">
+          <defs><clipPath id="cg-mug-clip-3"><rect x="7" y="11" width="20" height="20" rx="1.5"/></clipPath></defs>
+          <path d="M28 14 Q35 14 35 22 Q35 30 28 30" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <rect x="6" y="10" width="22" height="22" rx="2" fill="var(--color-background-primary)" stroke="currentColor" stroke-width="1.5"/>
+          <g clip-path="url(#cg-mug-clip-3)"><rect id="cg-mug-liquid" class="cgame-mug-liquid" x="7" y="11" width="20" height="20" fill="#D85A30"/></g>
+          <ellipse cx="17" cy="11" rx="10" ry="1" fill="#4A1B0C" opacity="0.25"/>
+        </svg>
+        <span id="cg-mug-count">5 / 8</span>
+        <button class="cgame-drink" id="cg-drink" onclick="cgDrink()">Drink (refill)</button>
+      </div>
+    </div>
+
+    <aside class="ad-slot" aria-label="Sponsored (joke ad slot)">
+      <p>Your ad could be here. Email <a href="mailto:istand34@gmail.com">istand34@gmail.com</a>.</p>
+      <p>Pricing: whatever you'll pay.</p>
+      <p>Current sponsors: nobody (Luke is welcome to claim this).</p>
+    </aside>
+
+    <section class="how-to">
+      <h2>How to play</h2>
+      <ul>
+        <li>Click empty receptors to dock caffeine before adenosine binds.</li>
+        <li>Don't let more than half the receptors block out for 5 seconds.</li>
+        <li>Drink to refill the mug (8 second cooldown).</li>
+      </ul>
+    </section>
+
+    <section class="how-it-works">
+      <h2>How caffeine actually works</h2>
+      <p>While you're awake, your brain produces a molecule called adenosine. It slowly builds up and binds to receptors that signal "you're tired." Caffeine has a shape similar enough to adenosine that it can dock at the same receptors first, blocking adenosine from binding. You don't actually feel more energized &mdash; you just feel less tired. Eventually adenosine wins, the caffeine wears off, and you crash. Hence: another cup.</p>
+    </section>
+
+    <div class="bmc-wrap">
+      <a href="https://www.buymeacoffee.com/PLACEHOLDER" class="bmc-link" target="_blank" rel="noopener">&#9749; buy me a coffee</a>
+    </div>
+
+    <footer class="page-footer">
+      <a href="https://ianstandbridge.com">&larr; ianstandbridge.com</a>
+    </footer>
+  </main>
+
+  <script src="/game.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,472 @@
+<style>
+.cgame { padding: 1rem 0; font-family: var(--font-sans); }
+.cgame-hud { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 13px; color: var(--color-text-secondary); flex-wrap: wrap; }
+.cgame-hud strong { color: var(--color-text-primary); font-weight: 500; }
+.cgame-bar { flex: 1; min-width: 80px; max-width: 170px; height: 8px; background: var(--color-background-secondary); border-radius: 4px; overflow: hidden; position: relative; }
+.cgame-bar-fill { height: 100%; background: var(--color-text-success); transition: width 0.25s linear, background 0.3s; width: 100%; }
+.cgame-bar-fill.low { background: var(--color-text-warning); }
+.cgame-bar-fill.crit { background: var(--color-text-danger); }
+.cgame-bar-threshold { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--color-text-secondary); opacity: 0.6; pointer-events: none; }
+.cgame-state { padding: 2px 10px; border-radius: var(--border-radius-md); font-size: 12px; font-weight: 500; background: var(--color-background-success); color: var(--color-text-success); transition: background 0.3s, color 0.3s; min-width: 110px; text-align: center; }
+.cgame-state.drowsy { background: var(--color-background-info); color: var(--color-text-info); }
+.cgame-state.crit { background: var(--color-background-danger); color: var(--color-text-danger); }
+.cgame-arena { position: relative; }
+.cgame-svg { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); display: block; width: 100%; outline: 2px solid transparent; outline-offset: -2px; transition: outline-color 0.2s; }
+.cgame-svg.danger { animation: cgDanger 0.7s ease-in-out infinite; }
+@keyframes cgDanger { 0%, 100% { outline-color: var(--color-text-danger); } 50% { outline-color: transparent; } }
+.receptor[data-status="empty"] { cursor: pointer; }
+.receptor[data-status="empty"]:hover .receptor-arm { stroke: var(--color-border-primary); stroke-width: 1; }
+.receptor .bound-caffeine, .receptor .bound-adenosine { opacity: 0; transition: opacity 0.2s; }
+.receptor[data-status="caffeine"] .bound-caffeine { opacity: 1; }
+.receptor[data-status="adenosine"] .bound-adenosine { opacity: 1; }
+.receptor[data-status="pending"] .bound-caffeine { opacity: 0.3; }
+.receptor[data-status="pending"] .receptor-arm { stroke: #D85A30; stroke-width: 1; }
+.receptor.expiring .bound-caffeine { animation: cgPulse 0.6s ease-in-out infinite; }
+.receptor.entering { animation: cgEnter 0.5s ease-out both; }
+@keyframes cgPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes cgEnter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bgD1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(14px, -10px); } }
+@keyframes bgD2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-12px, 14px); } }
+@keyframes bgD3 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(10px, 12px); } }
+@keyframes bgD4 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-14px, -12px); } }
+@keyframes bgPulse { 0%, 100% { opacity: 0.32; r: 6; } 50% { opacity: 0.55; r: 7; } }
+@media (prefers-reduced-motion: no-preference) {
+  .bg-drift-1 { animation: bgD1 3.4s ease-in-out infinite; transform-origin: center; }
+  .bg-drift-2 { animation: bgD2 4.2s ease-in-out infinite; transform-origin: center; }
+  .bg-drift-3 { animation: bgD3 3.8s ease-in-out infinite; transform-origin: center; }
+  .bg-drift-4 { animation: bgD4 4.6s ease-in-out infinite; transform-origin: center; }
+  #cg-dispenser-pulse { animation: bgPulse 1.6s ease-in-out infinite; }
+}
+.cgame-bottom { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 0 4px; font-size: 13px; color: var(--color-text-secondary); flex-wrap: wrap; }
+.cgame-mug-svg { flex-shrink: 0; color: var(--color-text-primary); }
+.cgame-mug-liquid { transition: transform 0.4s ease; transform-origin: 0 0; }
+.cgame-drink { margin-left: auto; }
+.cgame-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius-lg); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.cgame-overlay.show { opacity: 1; pointer-events: auto; }
+.cgame-overlay-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 20px 28px; text-align: center; border: 0.5px solid var(--color-border-tertiary); min-width: 220px; }
+.cgame-overlay-title { font-size: 18px; font-weight: 500; margin: 0 0 6px; color: var(--color-text-primary); }
+.cgame-overlay-sub { font-size: 14px; color: var(--color-text-secondary); margin: 0 0 14px; }
+.cgame-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.92); background: rgba(20, 20, 20, 0.82); color: #fff; padding: 14px 36px; border-radius: var(--border-radius-lg); font-size: 22px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity 0.4s, transform 0.4s; letter-spacing: 0.3px; }
+.cgame-banner.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.cgame-banner-sub { display: block; font-size: 13px; font-weight: 400; opacity: 0.8; margin-top: 4px; }
+.cgame-warn { position: absolute; top: 14px; left: 50%; transform: translate(-50%, 0); background: var(--color-background-danger); color: var(--color-text-danger); padding: 4px 14px; border-radius: var(--border-radius-md); font-size: 12px; font-weight: 500; opacity: 0; pointer-events: none; white-space: nowrap; transition: opacity 0.2s; }
+.cgame-warn.show { opacity: 1; }
+</style>
+
+<h2 class="sr-only">Caffeine receptor defense game with character molecules and clear sleep countdown</h2>
+
+<div class="cgame">
+  <div class="cgame-hud">
+    <span>Score <strong id="cg-score">0</strong></span>
+    <span>Level <strong id="cg-level">1</strong></span>
+    <span>Alertness</span>
+    <div class="cgame-bar">
+      <div id="cg-bar-fill" class="cgame-bar-fill"></div>
+      <div class="cgame-bar-threshold"></div>
+    </div>
+    <span id="cg-state" class="cgame-state">Alert</span>
+  </div>
+
+  <div class="cgame-arena">
+    <svg class="cgame-svg" id="cg-playfield" viewBox="0 0 680 380" width="100%" role="img">
+      <title>Caffeine receptor defense playfield</title>
+      <desc>Click empty receptors to dock caffeine before adenosine arrives. Avoid more than half being adenosine-blocked for 5 seconds.</desc>
+      <defs>
+        <pattern id="cg-dot-pattern" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+          <circle cx="16" cy="16" r="0.7" fill="#7F77DD" opacity="0.18"/>
+        </pattern>
+      </defs>
+
+      <rect x="0" y="0" width="680" height="380" fill="url(#cg-dot-pattern)"/>
+      <g id="cg-bg-particles"></g>
+
+      <text class="ts" x="20" y="28">Adenosine drifting in</text>
+      <line x1="0" y1="40" x2="680" y2="40" stroke="var(--color-border-tertiary)" stroke-width="0.5" stroke-dasharray="4 4"/>
+
+      <g id="cg-receptors"></g>
+
+      <rect x="0" y="305" width="680" height="40" fill="#888780" opacity="0.12"/>
+      <g id="cg-membrane-deco" opacity="0.32"></g>
+      <line x1="0" y1="305" x2="680" y2="305" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+      <line x1="0" y1="345" x2="680" y2="345" stroke="#888780" stroke-width="0.5" opacity="0.5"/>
+      <text class="ts" x="660" y="329" text-anchor="end">Neuron membrane</text>
+
+      <circle id="cg-dispenser-pulse" cx="340" cy="368" r="6" fill="#D85A30" opacity="0.4"/>
+      <circle id="cg-dispenser" cx="340" cy="368" r="3" fill="#D85A30" opacity="0.9"/>
+
+      <g id="cg-adenosine-layer"></g>
+      <g id="cg-caffeine-layer"></g>
+    </svg>
+
+    <div class="cgame-warn" id="cg-warn">Falling asleep in 5.0s</div>
+    <div class="cgame-banner" id="cg-banner"></div>
+    <div class="cgame-overlay" id="cg-overlay">
+      <div class="cgame-overlay-card">
+        <div class="cgame-overlay-title">You fell asleep</div>
+        <div class="cgame-overlay-sub">Reached level <strong id="cg-final-level">1</strong> with score <strong id="cg-final">0</strong></div>
+        <button onclick="cgReset()">Play again</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cgame-bottom">
+    <svg class="cgame-mug-svg" viewBox="0 0 40 40" width="36" height="36" aria-label="Caffeine mug">
+      <defs><clipPath id="cg-mug-clip-3"><rect x="7" y="11" width="20" height="20" rx="1.5"/></clipPath></defs>
+      <path d="M28 14 Q35 14 35 22 Q35 30 28 30" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="6" y="10" width="22" height="22" rx="2" fill="var(--color-background-primary)" stroke="currentColor" stroke-width="1.5"/>
+      <g clip-path="url(#cg-mug-clip-3)"><rect id="cg-mug-liquid" class="cgame-mug-liquid" x="7" y="11" width="20" height="20" fill="#D85A30"/></g>
+      <ellipse cx="17" cy="11" rx="10" ry="1" fill="#4A1B0C" opacity="0.25"/>
+    </svg>
+    <span id="cg-mug-count">5 / 8</span>
+    <button class="cgame-drink" id="cg-drink" onclick="cgDrink()">Drink (refill)</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const NS = 'http://www.w3.org/2000/svg';
+  const DOCK_Y = 268, SPAWN_Y = 20, ORIGIN_X = 340, ORIGIN_Y = 368;
+
+  const LEVELS = [
+    { positions: [100, 260, 420, 580], spawnStart: 2500, spawnEnd: 1000, halfLife: 8000, sticky: 8000, durationMs: 30000, name: 'Morning' },
+    { positions: [110, 240, 370, 500, 630], spawnStart: 1200, spawnEnd: 700, halfLife: 7000, sticky: 7000, durationMs: 30000, name: 'Afternoon slump' },
+    { positions: [70, 180, 290, 400, 510, 620], spawnStart: 800, spawnEnd: 450, halfLife: 6000, sticky: 6000, durationMs: 9e9, name: 'Late night' },
+  ];
+
+  const state = {
+    score: 0, caffeine: 5, caffeineMax: 8,
+    drinkCooldown: 0, drinkCooldownMax: 8000,
+    clickCooldown: 0, clickCooldownMax: 400,
+    receptors: [], adenosines: [], pendingCaffeine: [],
+    adenosineNextSpawn: 2000,
+    level: 1, levelIdx: 0, levelStartTime: 0,
+    alertnessTimer: 0, alertnessFailMs: 5000,
+    gameTime: 0, gameOver: false,
+    rafId: null, lastFrameTime: 0,
+  };
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function drawAdenosine(parent, scale) {
+    const s = scale || 1;
+    const g = el('g', null, parent);
+    el('circle', { r: (14 * s).toFixed(1), fill: '#7F77DD' }, g);
+    el('path', { d: 'M -7 -3 Q -4 -1 -1 -3', stroke: '#26215C', 'stroke-width': '1.4', fill: 'none', 'stroke-linecap': 'round', transform: 'scale(' + s + ')' }, g);
+    el('path', { d: 'M 1 -3 Q 4 -1 7 -3', stroke: '#26215C', 'stroke-width': '1.4', fill: 'none', 'stroke-linecap': 'round', transform: 'scale(' + s + ')' }, g);
+    el('ellipse', { cx: '0', cy: (5 * s).toFixed(1), rx: (2 * s).toFixed(1), ry: (1.5 * s).toFixed(1), fill: '#26215C' }, g);
+    return g;
+  }
+
+  function drawCaffeine(parent, scale) {
+    const s = scale || 1;
+    const g = el('g', null, parent);
+    el('circle', { r: (13 * s).toFixed(1), fill: '#D85A30' }, g);
+    el('circle', { cx: (-4 * s).toFixed(1), cy: (-2 * s).toFixed(1), r: (1.5 * s).toFixed(1), fill: '#4A1B0C' }, g);
+    el('circle', { cx: (4 * s).toFixed(1), cy: (-2 * s).toFixed(1), r: (1.5 * s).toFixed(1), fill: '#4A1B0C' }, g);
+    el('path', { d: 'M -3 5 Q 0 7 3 5', stroke: '#4A1B0C', 'stroke-width': '1.4', fill: 'none', 'stroke-linecap': 'round', transform: 'scale(' + s + ')' }, g);
+    return g;
+  }
+
+  function buildBackground() {
+    const layer = document.getElementById('cg-bg-particles');
+    while (layer.firstChild) layer.removeChild(layer.firstChild);
+    for (let i = 0; i < 24; i++) {
+      const x = 20 + Math.random() * 640;
+      const y = 50 + Math.random() * 240;
+      const r = 1 + Math.random() * 2.2;
+      const purple = Math.random() > 0.32;
+      el('circle', {
+        cx: x.toFixed(1), cy: y.toFixed(1), r: r.toFixed(1),
+        fill: purple ? '#7F77DD' : '#D85A30',
+        opacity: (0.07 + Math.random() * 0.11).toFixed(2),
+        class: 'bg-drift-' + ((i % 4) + 1),
+      }, layer);
+    }
+    const memb = document.getElementById('cg-membrane-deco');
+    while (memb.firstChild) memb.removeChild(memb.firstChild);
+    for (let x = 12; x < 680; x += 26) {
+      el('circle', { cx: x, cy: 305, r: 2.2, fill: '#73726c' }, memb);
+      el('line', { x1: x, y1: 307, x2: x, y2: 318, stroke: '#73726c', 'stroke-width': '0.6' }, memb);
+      el('circle', { cx: x, cy: 345, r: 2.2, fill: '#73726c' }, memb);
+      el('line', { x1: x, y1: 343, x2: x, y2: 332, stroke: '#73726c', 'stroke-width': '0.6' }, memb);
+    }
+  }
+
+  function buildReceptor(idx, x) {
+    const g = el('g', { class: 'receptor entering', 'data-receptor': idx, 'data-status': 'empty', transform: 'translate(' + x + ',260)' });
+    el('rect', { x: '-32', y: '-12', width: '64', height: '62', fill: 'transparent' }, g);
+    el('path', { class: 'receptor-arm', d: 'M -22 42 L -22 8 Q -22 0 -14 0 L -12 0 L -12 42 Z', fill: 'var(--color-background-primary)', stroke: 'var(--color-border-secondary)', 'stroke-width': '0.5' }, g);
+    el('path', { class: 'receptor-arm', d: 'M 12 42 L 12 0 L 14 0 Q 22 0 22 8 L 22 42 Z', fill: 'var(--color-background-primary)', stroke: 'var(--color-border-secondary)', 'stroke-width': '0.5' }, g);
+    el('rect', { x: '-22', y: '38', width: '44', height: '4', rx: '1', fill: 'var(--color-background-primary)', stroke: 'var(--color-border-secondary)', 'stroke-width': '0.5' }, g);
+    const cBound = el('g', { class: 'bound-caffeine', transform: 'translate(0,8)' }, g);
+    drawCaffeine(cBound, 1);
+    const aBound = el('g', { class: 'bound-adenosine', transform: 'translate(0,8)' }, g);
+    drawAdenosine(aBound, 1);
+    g.addEventListener('click', () => clickReceptor(idx));
+    return g;
+  }
+
+  function rebuildReceptors() {
+    const lvl = LEVELS[state.levelIdx];
+    const old = state.receptors;
+    state.receptors = lvl.positions.map((x, i) => ({
+      x: x,
+      status: old[i] ? old[i].status : 'empty',
+      timer: old[i] ? old[i].timer : 0,
+    }));
+    const layer = document.getElementById('cg-receptors');
+    while (layer.firstChild) layer.removeChild(layer.firstChild);
+    state.receptors.forEach((r, i) => {
+      const g = buildReceptor(i, r.x);
+      g.dataset.status = r.status;
+      layer.appendChild(g);
+    });
+  }
+
+  function getSpawnInterval() {
+    const lvl = LEVELS[state.levelIdx];
+    const elapsed = state.gameTime - state.levelStartTime;
+    const t = Math.min(elapsed / Math.min(lvl.durationMs, 30000), 1);
+    return lvl.spawnStart + (lvl.spawnEnd - lvl.spawnStart) * t;
+  }
+
+  function maybeAdvanceLevel() {
+    const lvl = LEVELS[state.levelIdx];
+    const elapsed = state.gameTime - state.levelStartTime;
+    if (state.levelIdx < LEVELS.length - 1 && elapsed >= lvl.durationMs) {
+      state.levelIdx++;
+      state.level = state.levelIdx + 1;
+      state.levelStartTime = state.gameTime;
+      document.getElementById('cg-level').textContent = state.level;
+      rebuildReceptors();
+      showBanner('Level ' + state.level, LEVELS[state.levelIdx].name);
+    }
+  }
+
+  function showBanner(title, sub) {
+    const b = document.getElementById('cg-banner');
+    b.innerHTML = title + (sub ? '<span class="cgame-banner-sub">' + sub + '</span>' : '');
+    b.classList.add('show');
+    setTimeout(() => b.classList.remove('show'), 1700);
+  }
+
+  function spawnAdenosine() {
+    const targetIdx = Math.floor(Math.random() * state.receptors.length);
+    const target = state.receptors[targetIdx];
+    const startX = Math.max(20, Math.min(660, target.x + (Math.random() - 0.5) * 100));
+    const travelMs = (DOCK_Y - SPAWN_Y) / 60 * 1000;
+    state.adenosines.push({
+      origX: startX, origY: SPAWN_Y, targetX: target.x, targetY: DOCK_Y,
+      x: startX, y: SPAWN_Y, travelMs: travelMs, elapsed: 0, target: targetIdx, dead: false,
+    });
+  }
+
+  function clickReceptor(idx) {
+    if (state.gameOver || state.clickCooldown > 0 || state.caffeine <= 0) return;
+    const r = state.receptors[idx];
+    if (!r || r.status !== 'empty') return;
+    state.caffeine--;
+    state.clickCooldown = state.clickCooldownMax;
+    r.status = 'pending';
+    state.pendingCaffeine.push({
+      target: idx, origX: ORIGIN_X, origY: ORIGIN_Y,
+      targetX: r.x, targetY: DOCK_Y,
+      progress: 0, elapsed: 0, travelMs: 400, dead: false,
+    });
+  }
+
+  function drink() {
+    if (state.drinkCooldown > 0 || state.gameOver) return;
+    state.caffeine = state.caffeineMax;
+    state.drinkCooldown = state.drinkCooldownMax;
+  }
+  window.cgDrink = drink;
+
+  function endGame() {
+    state.gameOver = true;
+    document.getElementById('cg-overlay').classList.add('show');
+    document.getElementById('cg-final').textContent = Math.floor(state.score);
+    document.getElementById('cg-final-level').textContent = state.level;
+    document.getElementById('cg-playfield').classList.remove('danger');
+    document.getElementById('cg-warn').classList.remove('show');
+  }
+
+  function reset() {
+    Object.assign(state, {
+      score: 0, caffeine: 5, drinkCooldown: 0, clickCooldown: 0,
+      adenosines: [], pendingCaffeine: [], adenosineNextSpawn: 2000,
+      level: 1, levelIdx: 0, levelStartTime: 0,
+      alertnessTimer: 0, gameTime: 0, gameOver: false, lastFrameTime: 0,
+      receptors: [],
+    });
+    document.getElementById('cg-level').textContent = '1';
+    document.getElementById('cg-overlay').classList.remove('show');
+    rebuildReceptors();
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    state.rafId = requestAnimationFrame(tick);
+  }
+  window.cgReset = reset;
+
+  function tick(t) {
+    if (state.gameOver) return;
+    const dt = state.lastFrameTime ? Math.min(t - state.lastFrameTime, 50) : 16;
+    state.lastFrameTime = t;
+    state.gameTime += dt;
+
+    maybeAdvanceLevel();
+
+    state.adenosines.forEach(a => {
+      a.elapsed += dt;
+      const p = Math.min(a.elapsed / a.travelMs, 1);
+      a.x = a.origX + (a.targetX - a.origX) * p;
+      a.y = a.origY + (a.targetY - a.origY) * p;
+      if (p >= 1) {
+        const target = state.receptors[a.target];
+        if (target && (target.status === 'empty' || target.status === 'pending')) {
+          target.status = 'adenosine';
+          target.timer = LEVELS[state.levelIdx].sticky;
+        }
+        a.dead = true;
+      }
+    });
+    state.adenosines = state.adenosines.filter(a => !a.dead);
+
+    state.pendingCaffeine.forEach(c => {
+      c.elapsed += dt;
+      c.progress = Math.min(c.elapsed / c.travelMs, 1);
+      if (c.progress >= 1) {
+        const target = state.receptors[c.target];
+        if (target && target.status === 'pending') {
+          target.status = 'caffeine';
+          target.timer = LEVELS[state.levelIdx].halfLife;
+        }
+        c.dead = true;
+      }
+    });
+    state.pendingCaffeine = state.pendingCaffeine.filter(c => !c.dead);
+
+    state.receptors.forEach(r => {
+      if (r.status === 'caffeine' || r.status === 'adenosine') {
+        r.timer -= dt;
+        if (r.timer <= 0) r.status = 'empty';
+      }
+    });
+
+    state.score += (state.receptors.filter(r => r.status === 'caffeine').length * dt) / 1000;
+
+    if (state.drinkCooldown > 0) state.drinkCooldown = Math.max(0, state.drinkCooldown - dt);
+    if (state.clickCooldown > 0) state.clickCooldown = Math.max(0, state.clickCooldown - dt);
+
+    if (state.gameTime >= state.adenosineNextSpawn) {
+      spawnAdenosine();
+      state.adenosineNextSpawn = state.gameTime + getSpawnInterval();
+    }
+
+    const blockedCount = state.receptors.filter(r => r.status === 'adenosine').length;
+    const blockedPct = state.receptors.length ? blockedCount / state.receptors.length : 0;
+    if (blockedPct > 0.5) {
+      state.alertnessTimer += dt;
+      if (state.alertnessTimer >= state.alertnessFailMs) { endGame(); render(); return; }
+    } else {
+      state.alertnessTimer = Math.max(0, state.alertnessTimer - dt * 0.5);
+    }
+
+    render();
+    state.rafId = requestAnimationFrame(tick);
+  }
+
+  function render() {
+    state.receptors.forEach((r, i) => {
+      const e = document.querySelector('[data-receptor="' + i + '"]');
+      if (!e) return;
+      e.dataset.status = r.status;
+      if (r.status === 'caffeine' && r.timer < 2000) e.classList.add('expiring');
+      else e.classList.remove('expiring');
+    });
+
+    const aL = document.getElementById('cg-adenosine-layer');
+    while (aL.firstChild) aL.removeChild(aL.firstChild);
+    state.adenosines.forEach(a => {
+      const g = el('g', { transform: 'translate(' + a.x.toFixed(1) + ',' + a.y.toFixed(1) + ')' }, aL);
+      drawAdenosine(g, 1);
+    });
+
+    const cL = document.getElementById('cg-caffeine-layer');
+    while (cL.firstChild) cL.removeChild(cL.firstChild);
+    state.pendingCaffeine.forEach(c => {
+      const x = c.origX + (c.targetX - c.origX) * c.progress;
+      const y = c.origY + (c.targetY - c.origY) * c.progress;
+      const g = el('g', { transform: 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')' }, cL);
+      drawCaffeine(g, 1);
+    });
+
+    document.getElementById('cg-score').textContent = Math.floor(state.score);
+
+    const ratio = state.caffeine / state.caffeineMax;
+    document.getElementById('cg-mug-liquid').style.transform = 'translateY(' + (20 * (1 - ratio)) + 'px)';
+    document.getElementById('cg-mug-count').textContent = state.caffeine + ' / ' + state.caffeineMax;
+
+    document.getElementById('cg-dispenser').setAttribute('opacity', state.clickCooldown > 0 ? '0.25' : '0.9');
+
+    const drinkBtn = document.getElementById('cg-drink');
+    if (state.drinkCooldown > 0) {
+      drinkBtn.disabled = true;
+      drinkBtn.textContent = 'Drink (' + Math.ceil(state.drinkCooldown / 1000) + 's)';
+    } else {
+      drinkBtn.disabled = false;
+      drinkBtn.textContent = 'Drink (refill)';
+    }
+
+    const blockedCount = state.receptors.filter(r => r.status === 'adenosine').length;
+    const alertness = state.receptors.length ? 1 - (blockedCount / state.receptors.length) : 1;
+    const inDanger = alertness < 0.5;
+    const remaining = Math.max(0, (state.alertnessFailMs - state.alertnessTimer) / 1000);
+
+    const fill = document.getElementById('cg-bar-fill');
+    fill.style.width = Math.round(alertness * 100) + '%';
+    fill.classList.remove('low', 'crit');
+    if (inDanger) fill.classList.add('crit');
+    else if (alertness < 0.75) fill.classList.add('low');
+
+    const stateEl = document.getElementById('cg-state');
+    stateEl.classList.remove('drowsy', 'crit');
+    let stateText;
+    if (inDanger) {
+      stateText = 'Sleep in ' + remaining.toFixed(1) + 's';
+      stateEl.classList.add('crit');
+    } else if (state.alertnessTimer > 100) {
+      stateText = 'Recovering';
+      stateEl.classList.add('drowsy');
+    } else if (alertness < 0.75) {
+      stateText = 'Slipping';
+      stateEl.classList.add('drowsy');
+    } else {
+      stateText = 'Alert';
+    }
+    stateEl.textContent = stateText;
+
+    const playfield = document.getElementById('cg-playfield');
+    if (inDanger) playfield.classList.add('danger');
+    else playfield.classList.remove('danger');
+
+    const warnEl = document.getElementById('cg-warn');
+    if (inDanger) {
+      warnEl.textContent = 'Falling asleep in ' + remaining.toFixed(1) + 's';
+      warnEl.classList.add('show');
+    } else {
+      warnEl.classList.remove('show');
+    }
+  }
+
+  buildBackground();
+  rebuildReceptors();
+  showBanner('Level 1', LEVELS[0].name);
+  render();
+  state.rafId = requestAnimationFrame(tick);
+})();
+</script>

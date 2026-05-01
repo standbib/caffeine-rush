@@ -1,0 +1,326 @@
+/* =========================================================
+   Design tokens — supplied verbatim from CLAUDE.md
+   The original game expected these from the artifact preview env.
+   ========================================================= */
+:root {
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+
+  /* Text */
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #6b6b6b;
+  --color-text-success: #2d8659;
+  --color-text-warning: #b87333;
+  --color-text-danger: #c0392b;
+  --color-text-info: #2c5f9e;
+
+  /* Backgrounds */
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f4f0;
+  --color-background-success: #e6f4ec;
+  --color-background-warning: #fbf0e1;
+  --color-background-danger: #fbe6e3;
+  --color-background-info: #e3edf7;
+
+  /* Borders */
+  --color-border-primary: #1a1a1a;
+  --color-border-secondary: #c4c2bc;
+  --color-border-tertiary: #e5e3dd;
+
+  /* Radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+}
+
+/* =========================================================
+   Base reset + page wrapper
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  line-height: 1.55;
+  font-size: 16px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+}
+
+@media (max-width: 600px) {
+  .page { padding: 32px 16px 56px; }
+}
+
+/* Header */
+.page-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.page-header h1 {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  margin: 0 0 4px;
+  color: var(--color-text-primary);
+}
+
+.page-header .tagline {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.2px;
+}
+
+@media (max-width: 600px) {
+  .page-header h1 { font-size: 32px; }
+  .page-header .tagline { font-size: 14px; }
+}
+
+/* Section spacing */
+.page > section,
+.page > .ad-slot,
+.page > .bmc-wrap {
+  margin-top: 40px;
+}
+
+.page h2 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 12px;
+  color: var(--color-text-primary);
+  letter-spacing: -0.2px;
+}
+
+.page p {
+  margin: 0 0 12px;
+  color: var(--color-text-primary);
+}
+
+.page p:last-child { margin-bottom: 0; }
+
+/* How to play list */
+.how-to ul {
+  margin: 0;
+  padding: 0 0 0 20px;
+  color: var(--color-text-primary);
+}
+
+.how-to li {
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.how-to li:last-child { margin-bottom: 0; }
+
+/* How it works prose */
+.how-it-works p {
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   Joke ad slot (the bit)
+   ========================================================= */
+.ad-slot {
+  position: relative;
+  border: 1px dashed var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-primary);
+  padding: 28px 22px 22px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ad-slot::before {
+  content: "Ad slot";
+  position: absolute;
+  top: 8px;
+  left: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+.ad-slot p {
+  margin: 0 0 4px;
+  color: var(--color-text-secondary);
+}
+
+.ad-slot p:last-child { margin-bottom: 0; }
+
+.ad-slot a {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.5px;
+  text-underline-offset: 2px;
+}
+
+/* =========================================================
+   Buy Me a Coffee link
+   ========================================================= */
+.bmc-wrap {
+  text-align: center;
+}
+
+.bmc-link {
+  display: inline-block;
+  padding: 10px 18px;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  font-size: 14px;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.bmc-link:hover {
+  border-color: var(--color-border-secondary);
+  background: var(--color-background-secondary);
+}
+
+/* =========================================================
+   Footer
+   ========================================================= */
+.page-footer {
+  margin-top: 56px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.page-footer a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-bottom: 0.5px solid var(--color-border-secondary);
+  padding-bottom: 1px;
+}
+
+.page-footer a:hover {
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-border-primary);
+}
+
+/* =========================================================
+   Generic button reset for in-game buttons
+   ========================================================= */
+button {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button:hover:not(:disabled) {
+  background: var(--color-background-secondary);
+  border-color: var(--color-border-primary);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   Game styles — verbatim from caffeine_rush_game_v5.html
+   (Source lines 1–54 of the original <style> block.)
+   ========================================================= */
+.cgame { padding: 1rem 0; font-family: var(--font-sans); }
+.cgame-hud { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 13px; color: var(--color-text-secondary); flex-wrap: wrap; }
+.cgame-hud strong { color: var(--color-text-primary); font-weight: 500; }
+.cgame-bar { flex: 1; min-width: 80px; max-width: 170px; height: 8px; background: var(--color-background-secondary); border-radius: 4px; overflow: hidden; position: relative; }
+.cgame-bar-fill { height: 100%; background: var(--color-text-success); transition: width 0.25s linear, background 0.3s; width: 100%; }
+.cgame-bar-fill.low { background: var(--color-text-warning); }
+.cgame-bar-fill.crit { background: var(--color-text-danger); }
+.cgame-bar-threshold { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--color-text-secondary); opacity: 0.6; pointer-events: none; }
+.cgame-state { padding: 2px 10px; border-radius: var(--border-radius-md); font-size: 12px; font-weight: 500; background: var(--color-background-success); color: var(--color-text-success); transition: background 0.3s, color 0.3s; min-width: 110px; text-align: center; }
+.cgame-state.drowsy { background: var(--color-background-info); color: var(--color-text-info); }
+.cgame-state.crit { background: var(--color-background-danger); color: var(--color-text-danger); }
+.cgame-arena { position: relative; }
+.cgame-svg { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); display: block; width: 100%; outline: 2px solid transparent; outline-offset: -2px; transition: outline-color 0.2s; }
+.cgame-svg.danger { animation: cgDanger 0.7s ease-in-out infinite; }
+@keyframes cgDanger { 0%, 100% { outline-color: var(--color-text-danger); } 50% { outline-color: transparent; } }
+.receptor[data-status="empty"] { cursor: pointer; }
+.receptor[data-status="empty"]:hover .receptor-arm { stroke: var(--color-border-primary); stroke-width: 1; }
+.receptor .bound-caffeine, .receptor .bound-adenosine { opacity: 0; transition: opacity 0.2s; }
+.receptor[data-status="caffeine"] .bound-caffeine { opacity: 1; }
+.receptor[data-status="adenosine"] .bound-adenosine { opacity: 1; }
+.receptor[data-status="pending"] .bound-caffeine { opacity: 0.3; }
+.receptor[data-status="pending"] .receptor-arm { stroke: #D85A30; stroke-width: 1; }
+.receptor.expiring .bound-caffeine { animation: cgPulse 0.6s ease-in-out infinite; }
+.receptor.entering { animation: cgEnter 0.5s ease-out both; }
+@keyframes cgPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes cgEnter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bgD1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(14px, -10px); } }
+@keyframes bgD2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-12px, 14px); } }
+@keyframes bgD3 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(10px, 12px); } }
+@keyframes bgD4 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-14px, -12px); } }
+@keyframes bgPulse { 0%, 100% { opacity: 0.32; r: 6; } 50% { opacity: 0.55; r: 7; } }
+@media (prefers-reduced-motion: no-preference) {
+  .bg-drift-1 { animation: bgD1 3.4s ease-in-out infinite; transform-origin: center; }
+  .bg-drift-2 { animation: bgD2 4.2s ease-in-out infinite; transform-origin: center; }
+  .bg-drift-3 { animation: bgD3 3.8s ease-in-out infinite; transform-origin: center; }
+  .bg-drift-4 { animation: bgD4 4.6s ease-in-out infinite; transform-origin: center; }
+  #cg-dispenser-pulse { animation: bgPulse 1.6s ease-in-out infinite; }
+}
+.cgame-bottom { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 0 4px; font-size: 13px; color: var(--color-text-secondary); flex-wrap: wrap; }
+.cgame-mug-svg { flex-shrink: 0; color: var(--color-text-primary); }
+.cgame-mug-liquid { transition: transform 0.4s ease; transform-origin: 0 0; }
+.cgame-drink { margin-left: auto; }
+.cgame-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius-lg); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.cgame-overlay.show { opacity: 1; pointer-events: auto; }
+.cgame-overlay-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 20px 28px; text-align: center; border: 0.5px solid var(--color-border-tertiary); min-width: 220px; }
+.cgame-overlay-title { font-size: 18px; font-weight: 500; margin: 0 0 6px; color: var(--color-text-primary); }
+.cgame-overlay-sub { font-size: 14px; color: var(--color-text-secondary); margin: 0 0 14px; }
+.cgame-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.92); background: rgba(20, 20, 20, 0.82); color: #fff; padding: 14px 36px; border-radius: var(--border-radius-lg); font-size: 22px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity 0.4s, transform 0.4s; letter-spacing: 0.3px; }
+.cgame-banner.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.cgame-banner-sub { display: block; font-size: 13px; font-weight: 400; opacity: 0.8; margin-top: 4px; }
+.cgame-warn { position: absolute; top: 14px; left: 50%; transform: translate(-50%, 0); background: var(--color-background-danger); color: var(--color-text-danger); padding: 4px 14px; border-radius: var(--border-radius-md); font-size: 12px; font-weight: 500; opacity: 0; pointer-events: none; white-space: nowrap; transition: opacity 0.2s; }
+.cgame-warn.show { opacity: 1; }
+
+/* The original game's <text class="ts"> labels did not have an explicit
+   .ts rule in the source style block. Add a sane default so the labels
+   actually render with the right size/color outside the artifact env. */
+.cgame-svg .ts {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  fill: var(--color-text-secondary);
+}
