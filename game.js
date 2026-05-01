@@ -179,8 +179,20 @@
     state.adenosineNextSpawn = state.gameTime + 800; // brief grace period after intermission
     document.getElementById('cg-level').textContent = state.level;
     document.getElementById('cg-intermission').classList.remove('show');
+    applyLevelTheme();
     rebuildReceptors();
     showBanner('Level ' + state.level, LEVELS[state.levelIdx].name);
+  }
+
+  // Time-of-day theming: swap a background class on the playfield SVG so
+  // levels feel like morning → afternoon → late night.
+  function applyLevelTheme() {
+    const pf = document.getElementById('cg-playfield');
+    if (!pf) return;
+    pf.classList.remove('level-morning', 'level-afternoon', 'level-night');
+    if (state.levelIdx === 0)      pf.classList.add('level-morning');
+    else if (state.levelIdx === 1) pf.classList.add('level-afternoon');
+    else                            pf.classList.add('level-night');
   }
 
   function updateIntermissionTimer() {
@@ -268,6 +280,7 @@
     document.getElementById('cg-level').textContent = '1';
     document.getElementById('cg-overlay').classList.remove('show');
     document.getElementById('cg-intermission').classList.remove('show');
+    applyLevelTheme();
     rebuildReceptors();
     if (state.rafId) cancelAnimationFrame(state.rafId);
     state.rafId = requestAnimationFrame(tick);
@@ -487,6 +500,7 @@
 
   initWelcomeModal();
   initIntermissionControls();
+  applyLevelTheme();
   buildBackground();
   rebuildReceptors();
   showBanner('Level 1', LEVELS[0].name);

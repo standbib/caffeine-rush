@@ -275,7 +275,24 @@ button:disabled {
 .cgame-state.drowsy { background: var(--color-background-info); color: var(--color-text-info); }
 .cgame-state.crit { background: var(--color-background-danger); color: var(--color-text-danger); }
 .cgame-arena { position: relative; }
-.cgame-svg { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); display: block; width: 100%; outline: 2px solid transparent; outline-offset: -2px; transition: outline-color 0.2s; }
+.cgame-svg { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); display: block; width: 100%; outline: 2px solid transparent; outline-offset: -2px; transition: outline-color 0.2s, background 0.6s ease; }
+
+/* Time-of-day progression — playfield bg shifts to match each level's name. */
+.cgame-svg.level-morning {
+  background: linear-gradient(180deg, #f9f5e9 0%, #f5f4f0 100%);
+}
+.cgame-svg.level-afternoon {
+  background: linear-gradient(180deg, #f7e8c5 0%, #ecd5a2 100%);
+}
+.cgame-svg.level-night {
+  background: linear-gradient(180deg, #1f1c3a 0%, #2c2750 100%);
+}
+.cgame-svg.level-night .ts {
+  fill: #b5b0d6;
+}
+/* Soften the membrane deco (drawn with literal hex) so it stays visible on dark bg */
+.cgame-svg.level-night #cg-membrane-deco { opacity: 0.55; }
+.cgame-svg.level-night rect[fill="#888780"] { fill: #6a6788; }
 .cgame-svg.danger { animation: cgDanger 0.7s ease-in-out infinite; }
 @keyframes cgDanger { 0%, 100% { outline-color: var(--color-text-danger); } 50% { outline-color: transparent; } }
 .receptor[data-status="empty"] { cursor: pointer; }
