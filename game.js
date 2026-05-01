@@ -177,6 +177,16 @@
     state.level = nextIdx + 1;
     state.levelStartTime = state.gameTime;
     state.adenosineNextSpawn = state.gameTime + 800; // brief grace period after intermission
+
+    // Fresh slate for the new level. Clear receptor state, any in-flight
+    // molecules, and the alertness countdown so a bad spot at the end of
+    // the previous level doesn't carry over into the new one. Score, level
+    // number, and the caffeine mug all persist.
+    state.receptors = [];
+    state.adenosines = [];
+    state.pendingCaffeine = [];
+    state.alertnessTimer = 0;
+
     document.getElementById('cg-level').textContent = state.level;
     document.getElementById('cg-intermission').classList.remove('show');
     applyLevelTheme();
