@@ -106,22 +106,8 @@ body {
   .ad-slot::before { top: 6px; left: 12px; }
   /* tip-prompt mobile padding override is below in its own rule */
 
-  /* HUD stacks: progress row on top, status (bar + state pill) on bottom.
-     Both rows full-width. */
-  .cgame-hud {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .cgame-hud-stats {
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-  .cgame-hud-status {
-    justify-content: space-between;
-    flex: 1 1 auto;
-  }
-  .cgame-bar { max-width: none; }
+  /* HUD mobile overrides moved below — they need to come after the desktop
+     .cgame-hud-status { flex: 1 1 240px } rule to win on cascade. */
 }
 
 /* Header */
@@ -407,6 +393,30 @@ button:disabled {
   min-width: 96px;
   text-align: center;
   flex-shrink: 0;
+}
+
+/* HUD mobile overrides — must come AFTER the desktop HUD rules above so
+   the cascade picks them up. Stacks the two HUD groups vertically with
+   normal flex sizing (no 240px flex-basis growing into a giant column). */
+@media (max-width: 600px) {
+  .cgame-hud {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .cgame-hud-stats {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .cgame-hud-status {
+    flex: 0 0 auto;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .cgame-bar {
+    flex: 1 1 auto;
+    max-width: none;
+  }
 }
 .cgame-state.drowsy { background: var(--color-background-info); color: var(--color-text-info); }
 .cgame-state.crit { background: var(--color-background-danger); color: var(--color-text-danger); }
