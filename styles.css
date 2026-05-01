@@ -73,7 +73,20 @@ body {
 }
 
 @media (max-width: 600px) {
-  .page { padding: 32px 12px 56px; }
+  .page { padding: 28px 12px 48px; }
+
+  /* Tighten section spacing — 40/36px reads as too airy on phones */
+  .page > section,
+  .page > .ad-slot,
+  .page > .tip-prompt,
+  .page > .bmc-wrap,
+  .page > details {
+    margin-top: 24px;
+  }
+  .page > .ad-slot + .tip-prompt {
+    margin-top: 8px;
+  }
+  .page-header { margin-bottom: 18px; }
 
   /* Give the game more room: bleed slightly past the page padding so the
      playfield is meaningfully wider on phones, and bump the SVG labels +
@@ -87,6 +100,11 @@ body {
   }
   /* Receptors and molecules scale with the SVG viewBox automatically;
      the wider arena above is what makes them bigger on mobile. */
+
+  /* Trim card padding on the joke pair so they don't dominate the viewport */
+  .ad-slot { padding: 22px 16px 16px; }
+  .ad-slot::before { top: 6px; left: 12px; }
+  /* tip-prompt mobile padding override is below in its own rule */
 }
 
 /* Header */
@@ -119,8 +137,15 @@ body {
 /* Section spacing */
 .page > section,
 .page > .ad-slot,
-.page > .bmc-wrap {
-  margin-top: 40px;
+.page > .tip-prompt,
+.page > .bmc-wrap,
+.page > details {
+  margin-top: 36px;
+}
+
+/* Ad slot + tip prompt are a paired joke. Render them as a tight stack. */
+.page > .ad-slot + .tip-prompt {
+  margin-top: 10px;
 }
 
 .page h2 {
@@ -989,8 +1014,7 @@ button:disabled {
   border-top: 0.5px solid var(--color-border-tertiary);
   border-bottom: 0.5px solid var(--color-border-tertiary);
   padding: 14px 0;
-  /* override default .page > section margin so it stays consistent */
-  margin-top: 40px;
+  /* margin-top inherited from unified .page > details rule */
 }
 
 .how-to-details > summary {
