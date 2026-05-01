@@ -73,7 +73,20 @@ body {
 }
 
 @media (max-width: 600px) {
-  .page { padding: 32px 16px 56px; }
+  .page { padding: 32px 12px 56px; }
+
+  /* Give the game more room: bleed slightly past the page padding so the
+     playfield is meaningfully wider on phones, and bump the SVG labels +
+     viewBox-text size so molecule labels stay legible at small scales. */
+  .cgame-arena {
+    margin-left: -8px;
+    margin-right: -8px;
+  }
+  .cgame-svg .ts {
+    font-size: 14px;
+  }
+  /* Receptors and molecules scale with the SVG viewBox automatically;
+     the wider arena above is what makes them bigger on mobile. */
 }
 
 /* Header */
