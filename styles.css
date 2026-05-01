@@ -453,6 +453,38 @@ button:disabled {
   cursor: progress;
 }
 
+/* Filter tabs (All / Mobile / Desktop) */
+.leaderboard-filter {
+  display: inline-flex;
+  margin: 0 0 10px;
+  padding: 2px;
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+}
+
+.lb-filter-btn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  padding: 5px 12px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lb-filter-btn:hover:not(.active) {
+  color: var(--color-text-primary);
+}
+
+.lb-filter-btn.active {
+  background: var(--color-text-primary);
+  color: var(--color-background-primary);
+}
+
 .leaderboard-list {
   list-style: none;
   margin: 0;

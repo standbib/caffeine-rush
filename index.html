@@ -196,6 +196,11 @@
         <h2>Leaderboard</h2>
         <button type="button" class="leaderboard-refresh" id="cg-lb-refresh" aria-label="Refresh leaderboard">refresh</button>
       </div>
+      <div class="leaderboard-filter" role="tablist" aria-label="Filter leaderboard by platform">
+        <button type="button" class="lb-filter-btn active" data-filter="all"     role="tab" aria-selected="true">All</button>
+        <button type="button" class="lb-filter-btn"        data-filter="mobile"  role="tab" aria-selected="false">Mobile</button>
+        <button type="button" class="lb-filter-btn"        data-filter="desktop" role="tab" aria-selected="false">Desktop</button>
+      </div>
       <ol class="leaderboard-list" id="cg-leaderboard">
         <li class="leaderboard-empty">Loading…</li>
       </ol>

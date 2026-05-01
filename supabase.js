@@ -42,11 +42,15 @@ let lastSubmittedId = null;
 // Data layer
 // ─────────────────────────────────────────────────────────────────────────
 
-async function fetchTopScores(limit = TOP_N) {
+async function fetchTopScores(limit = TOP_N, filter = 'all') {
   if (!supabase) return { data: [], notConfigured: true };
-  const { data, error } = await supabase
+  let query = supabase
     .from('scores')
-    .select('id, name, score, level_reached, platform, created_at')
+    .select('id, name, score, level_reached, platform, created_at');
+  if (filter === 'mobile' || filter === 'desktop') {
+    query = query.eq('platform', filter);
+  }
+  const { data, error } = await query
     .order('score', { ascending: false })
     .order('created_at', { ascending: true })
     .limit(limit);
@@ -87,10 +91,13 @@ async function submitScore({ name, score, level }) {
 
 const listEl   = document.getElementById('cg-leaderboard');
 const refreshBtn = document.getElementById('cg-lb-refresh');
+const filterEls  = Array.from(document.querySelectorAll('.lb-filter-btn'));
 const submitForm = document.getElementById('cg-submit-form');
 const nameInput  = document.getElementById('cg-name-input');
 const submitBtn  = document.getElementById('cg-submit-btn');
 const statusEl   = document.getElementById('cg-submit-status');
+
+let currentFilter = 'all';
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
@@ -98,7 +105,12 @@ function escapeHtml(s) {
   }[c]));
 }
 
-function renderEmpty(message = 'No scores yet — be the first.') {
+function renderEmpty(message) {
+  if (!message) {
+    if (currentFilter === 'mobile')  message = 'No mobile scores yet.';
+    else if (currentFilter === 'desktop') message = 'No desktop scores yet.';
+    else                              message = 'No scores yet — be the first.';
+  }
   listEl.innerHTML = `<li class="leaderboard-empty">${escapeHtml(message)}</li>`;
 }
 
@@ -136,16 +148,34 @@ async function refresh() {
   if (!isConfigured) { renderEmpty('Leaderboard coming soon.'); return; }
   if (refreshBtn) refreshBtn.disabled = true;
   try {
-    const { data, error, notConfigured } = await fetchTopScores();
+    const { data, error, notConfigured } = await fetchTopScores(TOP_N, currentFilter);
     if (notConfigured) { renderEmpty('Leaderboard coming soon.'); return; }
     if (error) { renderError(); return; }
     renderRows(data);
-    // Keep the in-modal mini list in sync with the main board.
-    if (data) renderMiniFromRows(data.slice(0, 3));
+    // Mini list in the game-over overlay always shows the all-time top 3,
+    // not the filtered view — fetch separately if filter is active.
+    if (currentFilter === 'all' && data) {
+      renderMiniFromRows(data.slice(0, 3));
+    }
   } finally {
     if (refreshBtn) refreshBtn.disabled = false;
   }
 }
+
+function setFilter(next) {
+  if (next === currentFilter) return;
+  currentFilter = next;
+  filterEls.forEach(btn => {
+    const active = btn.dataset.filter === next;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  refresh();
+}
+
+filterEls.forEach(btn => {
+  btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+});
 
 // ─────────────────────────────────────────────────────────────────────────
 // Mini leaderboard inside the game-over overlay
