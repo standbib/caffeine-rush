@@ -446,13 +446,6 @@ button:disabled {
 /* Soften the membrane deco (drawn with literal hex) so it stays visible on dark bg */
 .cgame-svg.level-night #cg-membrane-deco { opacity: 0.55; }
 .cgame-svg.level-night rect[fill="#888780"] { fill: #6a6788; }
-.cgame-telegraph {
-  stroke: #7F77DD;
-  stroke-width: 1.2;
-  stroke-dasharray: 3 5;
-  pointer-events: none;
-}
-.cgame-svg.level-night .cgame-telegraph { stroke: #b5aff0; }
 .cgame-svg.danger { animation: cgDanger 0.7s ease-in-out infinite; }
 @keyframes cgDanger { 0%, 100% { outline-color: var(--color-text-danger); } 50% { outline-color: transparent; } }
 .receptor[data-status="empty"] { cursor: pointer; }

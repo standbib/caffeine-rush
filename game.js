@@ -52,20 +52,11 @@
   const INTERMISSION_MS = 5000;
   const COOLDOWN_RING_CIRCUMFERENCE = 56.55; // 2 * pi * 9
 
-  // Telegraph: faint dashed guide line drawn from spawn X down to the
-  // target receptor BEFORE the adenosine itself appears. Gives the
-  // player reaction time to pre-position caffeine. The window between
-  // telegraph appearing and adenosine docking is TELEGRAPH_LEAD_MS +
-  // travelMs (e.g. 700 + 1600 = 2300ms on Day 1 Level 1).
-  const TELEGRAPH_LEAD_MS = 700;
-  const TELEGRAPH_FADE_IN_MS = 200;
-
   const state = {
     score: 0, caffeine: 5, caffeineMax: 8,
     drinkCooldown: 0, drinkCooldownMax: 8000,
     clickCooldown: 0, clickCooldownMax: 400,
     receptors: [], adenosines: [], pendingCaffeine: [],
-    telegraphs: [],
     adenosineNextSpawn: 2000,
     level: 1, levelIdx: 0, levelStartTime: 0,
     alertnessTimer: 0, alertnessFailMs: 5000,
@@ -279,7 +270,6 @@
     state.receptors = [];
     state.adenosines = [];
     state.pendingCaffeine = [];
-    state.telegraphs = [];
     state.alertnessTimer = 0;
 
     document.getElementById('cg-level').textContent = state.level;
@@ -322,24 +312,15 @@
     setTimeout(() => b.classList.remove('show'), 1700);
   }
 
-  function scheduleTelegraph() {
+  function spawnAdenosine() {
     if (!state.receptors.length) return;
     const targetIdx = Math.floor(Math.random() * state.receptors.length);
     const target = state.receptors[targetIdx];
     const startX = Math.max(20, Math.min(660, target.x + (Math.random() - 0.5) * 100));
-    state.telegraphs.push({
-      x: startX, targetX: target.x, target: targetIdx,
-      age: 0, leadMs: TELEGRAPH_LEAD_MS, dead: false,
-    });
-  }
-
-  function spawnAdenosineFromTelegraph(t) {
-    const target = state.receptors[t.target];
-    if (!target) return; // receptor count changed (level boundary edge case)
     const travelMs = currentLevel().travelMs;
     state.adenosines.push({
-      origX: t.x, origY: SPAWN_Y, targetX: target.x, targetY: DOCK_Y,
-      x: t.x, y: SPAWN_Y, travelMs: travelMs, elapsed: 0, target: t.target, dead: false,
+      origX: startX, origY: SPAWN_Y, targetX: target.x, targetY: DOCK_Y,
+      x: startX, y: SPAWN_Y, travelMs: travelMs, elapsed: 0, target: targetIdx, dead: false,
     });
   }
 
@@ -403,7 +384,7 @@
     }
     Object.assign(state, {
       score: 0, caffeine: 5, drinkCooldown: 0, clickCooldown: 0,
-      adenosines: [], pendingCaffeine: [], telegraphs: [], adenosineNextSpawn: 2000,
+      adenosines: [], pendingCaffeine: [], adenosineNextSpawn: 2000,
       level: 1, levelIdx: 0, levelStartTime: 0,
       alertnessTimer: 0, gameTime: 0, gameOver: false, lastFrameTime: 0,
       receptors: [],
@@ -504,17 +485,8 @@
     if (state.drinkCooldown > 0) state.drinkCooldown = Math.max(0, state.drinkCooldown - dt);
     if (state.clickCooldown > 0) state.clickCooldown = Math.max(0, state.clickCooldown - dt);
 
-    state.telegraphs.forEach(tg => {
-      tg.age += dt;
-      if (tg.age >= tg.leadMs) {
-        spawnAdenosineFromTelegraph(tg);
-        tg.dead = true;
-      }
-    });
-    state.telegraphs = state.telegraphs.filter(tg => !tg.dead);
-
     if (state.gameTime >= state.adenosineNextSpawn) {
-      scheduleTelegraph();
+      spawnAdenosine();
       state.adenosineNextSpawn = state.gameTime + getSpawnInterval();
     }
 
@@ -539,22 +511,6 @@
       if (r.status === 'caffeine' && r.timer < 2000) e.classList.add('expiring');
       else e.classList.remove('expiring');
     });
-
-    const tL = document.getElementById('cg-telegraph-layer');
-    if (tL) {
-      while (tL.firstChild) tL.removeChild(tL.firstChild);
-      state.telegraphs.forEach(tg => {
-        // Fade in over the first TELEGRAPH_FADE_IN_MS, hold steady after.
-        const fadeP = Math.min(tg.age / TELEGRAPH_FADE_IN_MS, 1);
-        const opacity = (0.42 * fadeP).toFixed(3);
-        el('line', {
-          x1: tg.x.toFixed(1), y1: SPAWN_Y,
-          x2: tg.targetX.toFixed(1), y2: DOCK_Y,
-          class: 'cgame-telegraph',
-          opacity: opacity,
-        }, tL);
-      });
-    }
 
     const aL = document.getElementById('cg-adenosine-layer');
     while (aL.firstChild) aL.removeChild(aL.firstChild);
