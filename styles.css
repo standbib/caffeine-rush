@@ -497,7 +497,9 @@ button:disabled {
    Dismisses on the first receptor tap. */
 .cgame-tooltip {
   position: absolute;
-  left: 50%;
+  /* Aim the arrow at receptor #2 (viewBox x=260 of 680 → ~38.24%)
+     instead of the gap between receptors #2 and #3 at 50%. */
+  left: 38.24%;
   bottom: 36%;
   transform: translateX(-50%);
   display: flex;
