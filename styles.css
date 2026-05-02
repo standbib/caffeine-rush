@@ -925,7 +925,15 @@ button:disabled {
   transition: opacity 0.15s;
 }
 
-.welcome-cta:hover { opacity: 0.85; }
+/* Override the global button:hover (which flips bg to light/cream but
+   leaves text color alone, making the white text disappear). Re-assert
+   dark bg + light text and use opacity for the hover dim. */
+.welcome-cta:hover:not(:disabled) {
+  background: var(--color-text-primary);
+  color: var(--color-background-primary);
+  border-color: var(--color-text-primary);
+  opacity: 0.85;
+}
 
 /* =========================================================
    Share-fallback modal — only shown if Web Share + clipboard both fail
