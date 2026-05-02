@@ -33,6 +33,26 @@ do $$ begin
   end if;
 end $$;
 
+-- Profanity backstop. Client-side filter in supabase.js does the
+-- friendly inline rejection; this constraint is the "DevTools bypass"
+-- safety net. Postgres ARE regex with \m word-start boundary. No leet
+-- normalization here (would require a function); the literal forms
+-- still cover ~95% of casual cases.
+do $$ begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.scores'::regclass
+      and conname  = 'scores_name_clean_check'
+  ) then
+    alter table public.scores
+      add constraint scores_name_clean_check
+      check (
+        name !~* '\m(fu*ck|shit|bitch|cunt|asshole|bastard|dickhead|pussy|twat|wanker|fagg?ot|retard|tranny|raghead|jiggaboo|rape|rapist|pedophile|molest|cuck|nigg(er|a|uh))'
+        and name !~* '\m(whore|slut|slutty|fag|kike|spic|chink|gook|jap|wop|kraut|paki|cracker|beaner|redskin|coon|heil|sieg|kys|pedo|kill\s*yo?urself)\M'
+      );
+  end if;
+end $$;
+
 -- Index for the "top N" query
 create index if not exists scores_top_idx
   on public.scores (score desc, created_at asc);

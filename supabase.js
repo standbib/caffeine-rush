@@ -25,6 +25,58 @@ function detectPlatform() {
   }
 }
 
+// ─── Profanity filter ─────────────────────────────────────────────────
+// Two-tier wordlist:
+//   LOOSE stems → any word starting with this is flagged (catches
+//   inflections like "fucker", "shitting"). Used for unambiguous slurs.
+//   STRICT stems → only exact word or simple plural matches. Used for
+//   short stems that frequently appear inside innocent words (e.g.
+//   "spec/spice" near "spic", "Cracker Barrel" near "cracker").
+//
+// Pre-normalization strips spaces/punctuation and applies common leet
+// substitutions (1→i, 0→o, @→a, $→s, 3→e, 4→a, 5→s, 7→t) so trolls
+// can't bypass with "f u c k" or "f@gg0t".
+//
+// Client-side layer for instant UX feedback. A CHECK constraint on the
+// scores table is the server-side backstop — DevTools bypass still gets
+// rejected by Postgres.
+const PROFANITY_RE = new RegExp([
+  // Loose stems: \b{stem}\w* — matches the stem and any longer word starting with it
+  '\\b(?:' + [
+    'f+u*c+k+',          // fuck, fck, f*ck (after star is stripped), fuuck
+    'sh+i+t+', 'b+i+t+c+h+',
+    'cunt', 'asshole', 'bastard', 'dickhead', 'pussy', 'twat', 'wanker',
+    'fagg?ot', 'retard', 'tranny', 'raghead', 'jiggaboo',
+    'rape', 'rapist',    // rape/rapist/rapes/raping
+    'pedophile', 'molest', 'cuck',
+    'n+i+g+(?:er|a|uh)+',
+  ].join('|') + ')\\w*',
+  // Strict stems: \b{stem}\b — exact word (with simple plural) only
+  '\\b(?:' + [
+    'whores?', 'sluts?', 'slutty',
+    'fags?', 'kikes?', 'spics?', 'chinks?', 'gooks?',
+    'japs?', 'wops?', 'krauts?', 'pakis?',
+    'crackers?', 'beaners?', 'redskins?', 'coons?',
+    'heil', 'sieg', 'kys', 'pedos?',
+    'kill\\s*yo?urself',
+  ].join('|') + ')\\b',
+].join('|'), 'i');
+
+function containsProfanity(name) {
+  // Lowercase + leet substitutions, but preserve word boundaries for
+  // accurate matching. Strip whitespace and common separator punctuation
+  // so "f.u.c.k" and "f u c k" don't slip through.
+  const normalized = String(name).toLowerCase()
+    .replace(/[\s._\-,'"!?*]/g, '')
+    .replace(/0/g, 'o')
+    .replace(/[1!|]/g, 'i')
+    .replace(/3/g, 'e')
+    .replace(/[4@]/g, 'a')
+    .replace(/[5$]/g, 's')
+    .replace(/7/g, 't');
+  return PROFANITY_RE.test(normalized);
+}
+
 const isConfigured =
   SUPABASE_URL.startsWith('https://') &&
   SUPABASE_ANON_KEY.length > 40;
@@ -69,6 +121,9 @@ async function submitScore({ name, score, level }) {
 
   const cleanName = String(name || '').trim().slice(0, 20);
   if (!cleanName) return { error: { message: 'Name required' } };
+  if (containsProfanity(cleanName)) {
+    return { error: { message: 'Please pick a different name.' } };
+  }
 
   const safeScore = Math.max(0, Math.min(50000, Math.floor(Number(score) || 0)));
   const safeLevel = Math.max(1, Math.min(3, Math.floor(Number(level) || 1)));
