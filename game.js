@@ -713,14 +713,31 @@
     if (!btn) return;
 
     const labelEl = btn.querySelector('span') || btn;
-    const flashCopied = (msg) => {
-      const orig = labelEl.textContent;
-      labelEl.textContent = msg || 'Link copied!';
-      btn.classList.add('copied');
+    const toastEl = document.getElementById('cg-share-toast');
+
+    // Touch devices (phones, tablets) keep the native share sheet — Messages,
+    // AirDrop, etc. is genuinely useful there. Desktop skips Web Share because
+    // its sheet is small + easy to dismiss accidentally; clipboard + toast is
+    // more predictable.
+    const isCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+    function showToast(msg) {
+      if (!toastEl) return;
+      toastEl.textContent = msg;
+      toastEl.classList.remove('fade-out');
+      toastEl.hidden = false;
+      // restart the entrance animation if toast was already visible
+      void toastEl.offsetWidth;
       setTimeout(() => {
-        labelEl.textContent = orig;
-        btn.classList.remove('copied');
-      }, 1800);
+        toastEl.classList.add('fade-out');
+        setTimeout(() => { toastEl.hidden = true; toastEl.classList.remove('fade-out'); }, 220);
+      }, 1500);
+    }
+
+    const flashCopied = (msg) => {
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 1500);
+      showToast(msg || 'Link copied to clipboard');
     };
 
     function buildPayload() {
@@ -737,11 +754,11 @@
     btn.addEventListener('click', async () => {
       const p = buildPayload();
 
-      // 1. Web Share API (iOS Safari, Android, recent desktop Chrome/Safari/Edge)
-      if (navigator.share) {
+      // 1. Mobile only — Web Share API (iOS share sheet, Android Messages/etc.)
+      if (isCoarse && navigator.share) {
         try {
           await navigator.share({ title: 'Caffeine Rush', text: p.text, url: p.url });
-          console.debug('[share] used Web Share API');
+          console.debug('[share] used Web Share API (mobile)');
           return;
         } catch (e) {
           if (e && e.name === 'AbortError') {
@@ -749,11 +766,10 @@
             return;
           }
           console.debug('[share] Web Share failed, falling through:', e && e.message);
-          // any other error → fall through to clipboard
         }
       }
 
-      // 2. Clipboard
+      // 2. Desktop (and mobile fallback) — Clipboard + visible toast
       if (navigator.clipboard && navigator.clipboard.writeText) {
         try {
           await navigator.clipboard.writeText(p.full);
@@ -765,7 +781,7 @@
         }
       }
 
-      // 3. In-page modal with textarea + Copy button
+      // 3. Final fallback: in-page modal with selectable textarea
       console.debug('[share] using in-page fallback modal');
       openShareFallbackModal(p.full, flashCopied);
     });

@@ -600,6 +600,36 @@ button:disabled {
   gap: 8px;
   margin-top: 4px;
   justify-content: center;
+  position: relative; /* anchor for .cgame-toast */
+}
+
+.cgame-toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  background: rgba(20, 20, 20, 0.92);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  animation: cgToastIn 0.18s ease-out;
+}
+.cgame-toast[hidden] { display: none; }
+.cgame-toast.fade-out { animation: cgToastOut 0.22s ease-out forwards; }
+@keyframes cgToastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes cgToastOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(-3px); }
 }
 
 .cgame-share {
