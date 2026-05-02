@@ -10,7 +10,7 @@
   // wider sticky window made Level 1 unloseable by inactivity; tightening
   // both turns it into a real "use it or lose it" opening level.
   const BASE_LEVELS = [
-    { positions: [100, 260, 420, 580],            spawnStart: 1500, spawnEnd: 900, halfLife: 8000, sticky: 8000, durationMs: 30000, travelMs: 1500, name: 'Morning' },
+    { positions: [100, 260, 420, 580],            spawnStart: 1500, spawnEnd: 900, halfLife: 8000, sticky: 8000, durationMs: 30000, travelMs: 1600, name: 'Morning' },
     { positions: [110, 240, 370, 500, 630],       spawnStart: 1100, spawnEnd: 700, halfLife: 7000, sticky: 7000, durationMs: 30000, travelMs: 1300, name: 'Afternoon slump' },
     { positions: [70, 180, 290, 400, 510, 620],   spawnStart: 800,  spawnEnd: 500, halfLife: 6000, sticky: 6000, durationMs: 45000, travelMs: 1100, name: 'Late night' },
   ];
@@ -52,11 +52,20 @@
   const INTERMISSION_MS = 5000;
   const COOLDOWN_RING_CIRCUMFERENCE = 56.55; // 2 * pi * 9
 
+  // Telegraph: faint dashed guide line drawn from spawn X down to the
+  // target receptor BEFORE the adenosine itself appears. Gives the
+  // player reaction time to pre-position caffeine. The window between
+  // telegraph appearing and adenosine docking is TELEGRAPH_LEAD_MS +
+  // travelMs (e.g. 700 + 1600 = 2300ms on Day 1 Level 1).
+  const TELEGRAPH_LEAD_MS = 700;
+  const TELEGRAPH_FADE_IN_MS = 200;
+
   const state = {
     score: 0, caffeine: 5, caffeineMax: 8,
     drinkCooldown: 0, drinkCooldownMax: 8000,
     clickCooldown: 0, clickCooldownMax: 400,
     receptors: [], adenosines: [], pendingCaffeine: [],
+    telegraphs: [],
     adenosineNextSpawn: 2000,
     level: 1, levelIdx: 0, levelStartTime: 0,
     alertnessTimer: 0, alertnessFailMs: 5000,
@@ -270,6 +279,7 @@
     state.receptors = [];
     state.adenosines = [];
     state.pendingCaffeine = [];
+    state.telegraphs = [];
     state.alertnessTimer = 0;
 
     document.getElementById('cg-level').textContent = state.level;
@@ -312,14 +322,24 @@
     setTimeout(() => b.classList.remove('show'), 1700);
   }
 
-  function spawnAdenosine() {
+  function scheduleTelegraph() {
+    if (!state.receptors.length) return;
     const targetIdx = Math.floor(Math.random() * state.receptors.length);
     const target = state.receptors[targetIdx];
     const startX = Math.max(20, Math.min(660, target.x + (Math.random() - 0.5) * 100));
+    state.telegraphs.push({
+      x: startX, targetX: target.x, target: targetIdx,
+      age: 0, leadMs: TELEGRAPH_LEAD_MS, dead: false,
+    });
+  }
+
+  function spawnAdenosineFromTelegraph(t) {
+    const target = state.receptors[t.target];
+    if (!target) return; // receptor count changed (level boundary edge case)
     const travelMs = currentLevel().travelMs;
     state.adenosines.push({
-      origX: startX, origY: SPAWN_Y, targetX: target.x, targetY: DOCK_Y,
-      x: startX, y: SPAWN_Y, travelMs: travelMs, elapsed: 0, target: targetIdx, dead: false,
+      origX: t.x, origY: SPAWN_Y, targetX: target.x, targetY: DOCK_Y,
+      x: t.x, y: SPAWN_Y, travelMs: travelMs, elapsed: 0, target: t.target, dead: false,
     });
   }
 
@@ -383,7 +403,7 @@
     }
     Object.assign(state, {
       score: 0, caffeine: 5, drinkCooldown: 0, clickCooldown: 0,
-      adenosines: [], pendingCaffeine: [], adenosineNextSpawn: 2000,
+      adenosines: [], pendingCaffeine: [], telegraphs: [], adenosineNextSpawn: 2000,
       level: 1, levelIdx: 0, levelStartTime: 0,
       alertnessTimer: 0, gameTime: 0, gameOver: false, lastFrameTime: 0,
       receptors: [],
@@ -484,8 +504,17 @@
     if (state.drinkCooldown > 0) state.drinkCooldown = Math.max(0, state.drinkCooldown - dt);
     if (state.clickCooldown > 0) state.clickCooldown = Math.max(0, state.clickCooldown - dt);
 
+    state.telegraphs.forEach(tg => {
+      tg.age += dt;
+      if (tg.age >= tg.leadMs) {
+        spawnAdenosineFromTelegraph(tg);
+        tg.dead = true;
+      }
+    });
+    state.telegraphs = state.telegraphs.filter(tg => !tg.dead);
+
     if (state.gameTime >= state.adenosineNextSpawn) {
-      spawnAdenosine();
+      scheduleTelegraph();
       state.adenosineNextSpawn = state.gameTime + getSpawnInterval();
     }
 
@@ -510,6 +539,22 @@
       if (r.status === 'caffeine' && r.timer < 2000) e.classList.add('expiring');
       else e.classList.remove('expiring');
     });
+
+    const tL = document.getElementById('cg-telegraph-layer');
+    if (tL) {
+      while (tL.firstChild) tL.removeChild(tL.firstChild);
+      state.telegraphs.forEach(tg => {
+        // Fade in over the first TELEGRAPH_FADE_IN_MS, hold steady after.
+        const fadeP = Math.min(tg.age / TELEGRAPH_FADE_IN_MS, 1);
+        const opacity = (0.42 * fadeP).toFixed(3);
+        el('line', {
+          x1: tg.x.toFixed(1), y1: SPAWN_Y,
+          x2: tg.targetX.toFixed(1), y2: DOCK_Y,
+          class: 'cgame-telegraph',
+          opacity: opacity,
+        }, tL);
+      });
+    }
 
     const aL = document.getElementById('cg-adenosine-layer');
     while (aL.firstChild) aL.removeChild(aL.firstChild);
