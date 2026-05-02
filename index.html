@@ -245,7 +245,11 @@
       </div>
       <div class="leaderboard-filter" role="tablist" aria-label="Filter leaderboard">
         <button type="button" class="lb-filter-btn active" data-filter="all"     role="tab" aria-selected="true">All</button>
-        <button type="button" class="lb-filter-btn"        data-filter="today"   role="tab" aria-selected="false">Today</button>
+        <!-- "Today" tab hidden until there's enough volume to make it interesting.
+             Remove the `hidden` attribute below to re-enable. The data + query
+             logic (created_at filter in supabase.js fetchTopScores) is fully
+             preserved, so historical scores are queryable the moment we flip it back. -->
+        <button type="button" class="lb-filter-btn"        data-filter="today"   role="tab" aria-selected="false" hidden>Today</button>
         <button type="button" class="lb-filter-btn"        data-filter="mobile"  role="tab" aria-selected="false">Mobile</button>
         <button type="button" class="lb-filter-btn"        data-filter="desktop" role="tab" aria-selected="false">Desktop</button>
       </div>
