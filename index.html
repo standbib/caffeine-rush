@@ -149,6 +149,12 @@
             <div class="cgame-overlay-title">You fell asleep</div>
             <div class="cgame-overlay-sub"><span id="cg-final-day-wrap" hidden>Survived to Day <strong id="cg-final-day">1</strong> · </span>Reached level <strong id="cg-final-level">1</strong> with score <strong id="cg-final">0</strong></div>
 
+            <div class="personal-best" id="cg-personal-best" hidden>
+              <span class="pb-label" id="cg-pb-label">Your best</span>
+              <span class="pb-score" id="cg-pb-score">0</span>
+              <span class="pb-meta"  id="cg-pb-meta">Level 1</span>
+            </div>
+
             <div class="leaderboard-mini" id="cg-leaderboard-mini" aria-label="Top scores">
               <div class="leaderboard-mini-head">Top scores</div>
               <ol class="leaderboard-mini-list" id="cg-leaderboard-mini-list">
@@ -230,8 +236,9 @@
         <h2>Leaderboard</h2>
         <button type="button" class="leaderboard-refresh" id="cg-lb-refresh" aria-label="Refresh leaderboard">refresh</button>
       </div>
-      <div class="leaderboard-filter" role="tablist" aria-label="Filter leaderboard by platform">
+      <div class="leaderboard-filter" role="tablist" aria-label="Filter leaderboard">
         <button type="button" class="lb-filter-btn active" data-filter="all"     role="tab" aria-selected="true">All</button>
+        <button type="button" class="lb-filter-btn"        data-filter="today"   role="tab" aria-selected="false">Today</button>
         <button type="button" class="lb-filter-btn"        data-filter="mobile"  role="tab" aria-selected="false">Mobile</button>
         <button type="button" class="lb-filter-btn"        data-filter="desktop" role="tab" aria-selected="false">Desktop</button>
       </div>

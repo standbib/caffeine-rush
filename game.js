@@ -68,6 +68,43 @@
     day: 1,
   };
 
+  // ─── Personal best (localStorage, browser-local) ────────────────────
+  const PB_KEY = 'cgPersonalBest';
+
+  function getPersonalBest() {
+    try { return JSON.parse(localStorage.getItem(PB_KEY) || 'null'); }
+    catch (_) { return null; }
+  }
+
+  function savePersonalBestIfNew(score, day, level) {
+    const cur = getPersonalBest();
+    if (cur && score <= cur.score) return false;
+    try {
+      localStorage.setItem(PB_KEY, JSON.stringify({
+        score: score, day: day, level: level, at: Date.now(),
+      }));
+    } catch (_) { /* private mode etc — silent */ }
+    return true;
+  }
+
+  function renderPersonalBest(isNewBest) {
+    const wrap = document.getElementById('cg-personal-best');
+    if (!wrap) return;
+    const best = getPersonalBest();
+    if (!best) { wrap.hidden = true; return; }
+
+    const labelEl = document.getElementById('cg-pb-label');
+    const scoreEl = document.getElementById('cg-pb-score');
+    const metaEl  = document.getElementById('cg-pb-meta');
+
+    if (labelEl) labelEl.textContent = isNewBest ? 'New personal best' : 'Your best';
+    if (scoreEl) scoreEl.textContent = best.score.toLocaleString();
+    if (metaEl)  metaEl.textContent  = (best.day > 1 ? 'Day ' + best.day + ' · ' : '') + 'Level ' + best.level;
+
+    wrap.classList.toggle('is-new', !!isNewBest);
+    wrap.hidden = false;
+  }
+
   function pickFact() {
     if (state.usedFacts.length >= FACTS.length) state.usedFacts = [];
     let idx;
@@ -314,12 +351,16 @@
     state.intermission = false;
     document.getElementById('cg-overlay').classList.add('show');
     document.getElementById('cg-intermission').classList.remove('show');
-    document.getElementById('cg-final').textContent = Math.floor(state.score);
+    const finalScore = Math.floor(state.score);
+    document.getElementById('cg-final').textContent = finalScore;
     document.getElementById('cg-final-level').textContent = state.level;
     const finalDayEl = document.getElementById('cg-final-day');
     const dayWrapEl  = document.getElementById('cg-final-day-wrap');
     if (finalDayEl) finalDayEl.textContent = state.day;
     if (dayWrapEl)  dayWrapEl.hidden = state.day <= 1;
+
+    const isNewBest = savePersonalBestIfNew(finalScore, state.day, state.level);
+    renderPersonalBest(isNewBest);
     document.getElementById('cg-playfield').classList.remove('danger');
     document.getElementById('cg-warn').classList.remove('show');
     if (window.cgLeaderboard && typeof window.cgLeaderboard.showSubmitForm === 'function') {
@@ -349,6 +390,8 @@
     if (dayEl) dayEl.textContent = '1';
     document.getElementById('cg-overlay').classList.remove('show');
     document.getElementById('cg-intermission').classList.remove('show');
+    const pbWrap = document.getElementById('cg-personal-best');
+    if (pbWrap) pbWrap.classList.remove('is-new'); // drop celebration tint after restart
     applyLevelTheme();
     rebuildReceptors();
     if (state.rafId) cancelAnimationFrame(state.rafId);

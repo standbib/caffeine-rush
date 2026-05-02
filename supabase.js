@@ -49,6 +49,12 @@ async function fetchTopScores(limit = TOP_N, filter = 'all') {
     .select('id, name, score, level_reached, platform, created_at');
   if (filter === 'mobile' || filter === 'desktop') {
     query = query.eq('platform', filter);
+  } else if (filter === 'today') {
+    // "Today" is local-midnight to local-now. Convert to ISO for the
+    // Supabase timestamptz comparison.
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    query = query.gte('created_at', start.toISOString());
   }
   const { data, error } = await query
     .order('score', { ascending: false })
@@ -107,9 +113,10 @@ function escapeHtml(s) {
 
 function renderEmpty(message) {
   if (!message) {
-    if (currentFilter === 'mobile')  message = 'No mobile scores yet.';
+    if (currentFilter === 'today')        message = 'No scores today yet — be the first.';
+    else if (currentFilter === 'mobile')  message = 'No mobile scores yet.';
     else if (currentFilter === 'desktop') message = 'No desktop scores yet.';
-    else                              message = 'No scores yet — be the first.';
+    else                                  message = 'No scores yet — be the first.';
   }
   listEl.innerHTML = `<li class="leaderboard-empty">${escapeHtml(message)}</li>`;
 }

@@ -1046,6 +1046,57 @@ button:disabled {
 }
 
 /* =========================================================
+   Personal best chip (inside game-over overlay)
+   ========================================================= */
+.personal-best {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 10px auto 4px;
+  padding: 6px 12px;
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-secondary);
+  border: 0.5px solid var(--color-border-tertiary);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.personal-best[hidden] { display: none; }
+
+.pb-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.pb-score {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.pb-meta {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.personal-best.is-new {
+  background: var(--color-background-success);
+  border-color: var(--color-text-success);
+  color: var(--color-text-success);
+  animation: pbPulse 0.5s ease-out;
+}
+.personal-best.is-new .pb-label,
+.personal-best.is-new .pb-score,
+.personal-best.is-new .pb-meta { color: var(--color-text-success); }
+
+@keyframes pbPulse {
+  0%   { transform: scale(0.95); opacity: 0.5; }
+  60%  { transform: scale(1.04); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* =========================================================
    Mini leaderboard (inside game-over overlay)
    ========================================================= */
 .leaderboard-mini {
