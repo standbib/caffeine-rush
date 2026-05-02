@@ -689,17 +689,13 @@
 
   // Share button — chain: Web Share API → clipboard → in-page modal.
   // Every successful path produces visible feedback. No silent failures.
-  function initShareButton() {
-    const btn = document.getElementById('cg-share-btn');
+  // Touch devices keep the native share sheet (genuinely useful there);
+  // desktop skips Web Share because its sheet is small + easy to dismiss
+  // accidentally — clipboard + toast is more predictable.
+  function bindShareButton(opts) {
+    const btn = document.getElementById(opts.btnId);
     if (!btn) return;
-
-    const labelEl = btn.querySelector('span') || btn;
-    const toastEl = document.getElementById('cg-share-toast');
-
-    // Touch devices (phones, tablets) keep the native share sheet — Messages,
-    // AirDrop, etc. is genuinely useful there. Desktop skips Web Share because
-    // its sheet is small + easy to dismiss accidentally; clipboard + toast is
-    // more predictable.
+    const toastEl = opts.toastId ? document.getElementById(opts.toastId) : null;
     const isCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
 
     function showToast(msg) {
@@ -707,8 +703,7 @@
       toastEl.textContent = msg;
       toastEl.classList.remove('fade-out');
       toastEl.hidden = false;
-      // restart the entrance animation if toast was already visible
-      void toastEl.offsetWidth;
+      void toastEl.offsetWidth; // restart entrance animation
       setTimeout(() => {
         toastEl.classList.add('fade-out');
         setTimeout(() => { toastEl.hidden = true; toastEl.classList.remove('fade-out'); }, 220);
@@ -721,21 +716,9 @@
       showToast(msg || 'Link copied to clipboard');
     };
 
-    function buildPayload() {
-      const score = document.getElementById('cg-final').textContent || '0';
-      const level = document.getElementById('cg-final-level').textContent || '1';
-      const dayEl = document.getElementById('cg-final-day');
-      const day   = dayEl ? parseInt(dayEl.textContent || '1', 10) : 1;
-      const survived = day > 1 ? ('Day ' + day) : ('Level ' + level);
-      const text  = "I scored " + score + " on Caffeine Rush — survived to " + survived + " before falling asleep. Beat my score:";
-      const url   = 'https://caffeine.ianstandbridge.com';
-      return { text: text, url: url, full: text + ' ' + url };
-    }
-
     btn.addEventListener('click', async () => {
-      const p = buildPayload();
+      const p = opts.buildPayload();
 
-      // 1. Mobile only — Web Share API (iOS share sheet, Android Messages/etc.)
       if (isCoarse && navigator.share) {
         try {
           await navigator.share({ title: 'Caffeine Rush', text: p.text, url: p.url });
@@ -750,7 +733,6 @@
         }
       }
 
-      // 2. Desktop (and mobile fallback) — Clipboard + visible toast
       if (navigator.clipboard && navigator.clipboard.writeText) {
         try {
           await navigator.clipboard.writeText(p.full);
@@ -762,9 +744,37 @@
         }
       }
 
-      // 3. Final fallback: in-page modal with selectable textarea
       console.debug('[share] using in-page fallback modal');
       openShareFallbackModal(p.full, flashCopied);
+    });
+  }
+
+  function initShareButtons() {
+    // Game-over share: includes player's score + day/level reached.
+    bindShareButton({
+      btnId: 'cg-share-btn',
+      toastId: 'cg-share-toast',
+      buildPayload: () => {
+        const score = document.getElementById('cg-final').textContent || '0';
+        const level = document.getElementById('cg-final-level').textContent || '1';
+        const dayEl = document.getElementById('cg-final-day');
+        const day   = dayEl ? parseInt(dayEl.textContent || '1', 10) : 1;
+        const survived = day > 1 ? ('Day ' + day) : ('Level ' + level);
+        const text  = "I scored " + score + " on Caffeine Rush — survived to " + survived + " before falling asleep. Beat my score:";
+        const url   = 'https://caffeine.ianstandbridge.com';
+        return { text: text, url: url, full: text + ' ' + url };
+      },
+    });
+
+    // Page share: lets visitors share the game without playing through.
+    bindShareButton({
+      btnId: 'cg-page-share-btn',
+      toastId: 'cg-page-share-toast',
+      buildPayload: () => {
+        const text = "Caffeine Rush — a 2-minute browser game about how caffeine actually works.";
+        const url  = 'https://caffeine.ianstandbridge.com';
+        return { text: text, url: url, full: text + ' ' + url };
+      },
     });
   }
 
@@ -803,7 +813,7 @@
 
   initWelcomeModal();
   initIntermissionControls();
-  initShareButton();
+  initShareButtons();
   applyLevelTheme();
   buildBackground();
   rebuildReceptors();

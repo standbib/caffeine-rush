@@ -137,6 +137,19 @@ body {
   .page-header .tagline { font-size: 14px; }
 }
 
+/* Page share button: small, centered below the tagline. Stays understated
+   so it doesn't compete with the editorial title; same icon + flash + toast
+   pattern as the game-over share button so the visual logic is consistent. */
+.page-share-wrap {
+  position: relative;
+  display: inline-flex;
+  margin-top: 12px;
+}
+.page-share-btn {
+  font-size: 12px;
+  padding: 5px 12px;
+}
+
 /* Section spacing */
 .page > section,
 .page > .ad-slot,
