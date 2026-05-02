@@ -486,6 +486,53 @@ button:disabled {
 .cgame-warn { position: absolute; top: 14px; left: 50%; transform: translate(-50%, 0); background: var(--color-background-danger); color: var(--color-text-danger); padding: 4px 14px; border-radius: var(--border-radius-md); font-size: 12px; font-weight: 500; opacity: 0; pointer-events: none; white-space: nowrap; transition: opacity 0.2s; }
 .cgame-warn.show { opacity: 1; }
 
+/* First-play tooltip: floats above the receptor row with a downward arrow.
+   Dismisses on the first receptor tap. */
+.cgame-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 36%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 5;
+  animation: cgTooltipBounce 1.4s ease-in-out infinite;
+}
+.cgame-tooltip[hidden] { display: none; }
+.cgame-tooltip-text {
+  background: rgba(20, 20, 20, 0.86);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.cgame-tooltip-arrow {
+  color: rgba(20, 20, 20, 0.86);
+  font-size: 18px;
+  line-height: 1;
+  margin-top: -1px;
+}
+@keyframes cgTooltipBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(-4px); }
+}
+
+/* While tooltip is up, gently pulse all empty receptors so the visitor
+   knows they're tappable. */
+.cgame-svg.tooltip-mode .receptor[data-status="empty"] .receptor-arm {
+  animation: cgReceptorHint 1.2s ease-in-out infinite;
+}
+@keyframes cgReceptorHint {
+  0%, 100% { stroke: var(--color-border-secondary); stroke-width: 0.5; }
+  50%      { stroke: var(--color-border-primary);   stroke-width: 1.4; }
+}
+
 /* The original game's <text class="ts"> labels did not have an explicit
    .ts rule in the source style block. Add a sane default so the labels
    actually render with the right size/color outside the artifact env. */

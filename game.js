@@ -67,6 +67,7 @@
     usedFacts: [],
     day: 1,
     welcomeOpen: false,
+    tooltipOpen: false,
   };
 
   // ─── Personal best (localStorage, browser-local) ────────────────────
@@ -323,6 +324,10 @@
   }
 
   function clickReceptor(idx) {
+    // First click after dismissing the welcome modal: hide the tooltip
+    // and let the rest of the click logic run normally so the very same
+    // tap also docks caffeine — no wasted "tutorial click".
+    if (state.tooltipOpen) dismissTooltip();
     if (state.gameOver || state.clickCooldown > 0 || state.caffeine <= 0) return;
     const r = state.receptors[idx];
     if (!r || r.status !== 'empty') return;
@@ -385,7 +390,12 @@
       intermission: false, intermissionStart: 0, intermissionNextIdx: 0, intermissionNextDay: 1,
       intermissionTimerId: null,
       day: 1,
+      tooltipOpen: false,
     });
+    const tip = document.getElementById('cg-tooltip');
+    if (tip) tip.hidden = true;
+    const pf  = document.getElementById('cg-playfield');
+    if (pf) pf.classList.remove('tooltip-mode');
     document.getElementById('cg-level').textContent = '1';
     const dayEl = document.getElementById('cg-day');
     if (dayEl) dayEl.textContent = '1';
@@ -403,10 +413,11 @@
   function tick(t) {
     if (state.gameOver) return;
 
-    // Welcome modal is up: don't advance the simulation. Adenosines must
-    // not spawn while the user is reading the rules. Keep RAF alive so
-    // gameplay resumes the instant they dismiss.
-    if (state.welcomeOpen) {
+    // Welcome modal or first-play tooltip is up: don't advance the
+    // simulation. Adenosines must not spawn while the user is reading or
+    // figuring out where to tap. Keep RAF alive so gameplay resumes the
+    // instant they engage.
+    if (state.welcomeOpen || state.tooltipOpen) {
       state.rafId = requestAnimationFrame(tick);
       return;
     }
@@ -619,7 +630,29 @@
       // unpause uses the default 16ms dt instead of jumping forward.
       state.lastFrameTime = 0;
       try { localStorage.setItem('cgSeenWelcome', '1'); } catch (_) {}
+      // Hand off to the first-play tooltip — keeps the game paused until
+      // the visitor taps a receptor so they don't lose before they
+      // understand what they're looking at.
+      showTooltip();
     });
+  }
+
+  function showTooltip() {
+    const tip = document.getElementById('cg-tooltip');
+    const playfield = document.getElementById('cg-playfield');
+    if (!tip || !playfield) return;
+    state.tooltipOpen = true;
+    tip.hidden = false;
+    playfield.classList.add('tooltip-mode');
+  }
+
+  function dismissTooltip() {
+    const tip = document.getElementById('cg-tooltip');
+    const playfield = document.getElementById('cg-playfield');
+    state.tooltipOpen = false;
+    if (tip) tip.hidden = true;
+    if (playfield) playfield.classList.remove('tooltip-mode');
+    state.lastFrameTime = 0; // resume with a fresh 16ms dt
   }
 
   // Intermission Skip button.

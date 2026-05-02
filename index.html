@@ -130,6 +130,13 @@
         <div class="cgame-warn" id="cg-warn">Falling asleep in 5.0s</div>
         <div class="cgame-banner" id="cg-banner"></div>
 
+        <!-- First-play tooltip: shown immediately after the welcome modal is
+             dismissed. Game stays paused until the player taps any receptor. -->
+        <div class="cgame-tooltip" id="cg-tooltip" hidden>
+          <span class="cgame-tooltip-text">tap any receptor to start</span>
+          <span class="cgame-tooltip-arrow" aria-hidden="true">↓</span>
+        </div>
+
         <!-- Inter-level intermission overlay -->
         <div class="cgame-overlay cgame-intermission" id="cg-intermission">
           <div class="cgame-overlay-card intermission-card">
