@@ -472,6 +472,23 @@ button:disabled {
   #cg-dispenser-pulse { animation: bgPulse 1.6s ease-in-out infinite; }
 }
 .cgame-bottom { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; padding: 0 4px; font-size: 13px; color: var(--color-text-secondary); flex-wrap: wrap; }
+
+/* Drink button wrapper anchors the up-pointing Drink tooltip directly
+   below the button, regardless of how .cgame-bottom flex-wraps. */
+.cgame-drink-wrap { position: relative; display: inline-flex; }
+
+/* Drink tooltip variant: arrow on top, text below — points UP at the
+   Drink button instead of DOWN at a receptor. */
+.cgame-tooltip.cgame-tooltip-up {
+  left: 50%;
+  bottom: auto;
+  top: calc(100% + 4px);
+}
+.cgame-tooltip-up .cgame-tooltip-arrow {
+  margin-top: 0;
+  margin-bottom: -1px;
+  order: -1;
+}
 .cgame-mug-svg { flex-shrink: 0; color: var(--color-text-primary); }
 .cgame-mug-liquid { transition: transform 0.4s ease; transform-origin: 0 0; }
 .cgame-drink { /* centered with the rest */ }

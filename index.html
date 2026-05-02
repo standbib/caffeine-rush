@@ -208,7 +208,13 @@
           <ellipse cx="17" cy="11" rx="10" ry="1" fill="#4A1B0C" opacity="0.25"/>
         </svg>
         <span id="cg-mug-count">5 / 8</span>
-        <button class="cgame-drink" id="cg-drink" onclick="cgDrink()">Drink (refill)</button>
+        <div class="cgame-drink-wrap">
+          <button class="cgame-drink" id="cg-drink" onclick="cgDrink()">Drink (refill)</button>
+          <div class="cgame-tooltip cgame-tooltip-up" id="cg-tooltip-drink" hidden>
+            <span class="cgame-tooltip-arrow" aria-hidden="true">↑</span>
+            <span class="cgame-tooltip-text">tap Drink to refill the mug</span>
+          </div>
+        </div>
       </div>
     </div>
 

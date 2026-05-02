@@ -654,6 +654,31 @@
     if (tip) tip.hidden = true;
     if (playfield) playfield.classList.remove('tooltip-mode');
     state.lastFrameTime = 0; // resume with a fresh 16ms dt
+
+    // Hand off to the second tooltip pointing at the Drink button so the
+    // player learns the refill mechanic right after the docking mechanic.
+    // Non-blocking — game keeps running.
+    if (!state.drinkTipShown) {
+      state.drinkTipShown = true;
+      setTimeout(showDrinkTooltip, 1200);
+    }
+  }
+
+  function showDrinkTooltip() {
+    const tip = document.getElementById('cg-tooltip-drink');
+    if (!tip || state.gameOver) return;
+    tip.hidden = false;
+
+    const drinkBtn = document.getElementById('cg-drink');
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      tip.hidden = true;
+      if (drinkBtn) drinkBtn.removeEventListener('click', dismiss);
+    };
+    if (drinkBtn) drinkBtn.addEventListener('click', dismiss);
+    setTimeout(dismiss, 5000);
   }
 
   // Intermission Skip button.
