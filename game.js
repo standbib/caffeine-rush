@@ -66,6 +66,7 @@
     intermissionTimerId: null,
     usedFacts: [],
     day: 1,
+    welcomeOpen: false,
   };
 
   // ─── Personal best (localStorage, browser-local) ────────────────────
@@ -402,6 +403,14 @@
   function tick(t) {
     if (state.gameOver) return;
 
+    // Welcome modal is up: don't advance the simulation. Adenosines must
+    // not spawn while the user is reading the rules. Keep RAF alive so
+    // gameplay resumes the instant they dismiss.
+    if (state.welcomeOpen) {
+      state.rafId = requestAnimationFrame(tick);
+      return;
+    }
+
     // Inter-level intermission: keep the RAF loop alive to drive the timer
     // bar, but freeze gameplay (no dt accumulation, no spawns, no decay).
     if (state.intermission) {
@@ -589,6 +598,8 @@
   }
 
   // Welcome modal — shown on first visit only (localStorage flag).
+  // While the modal is open, tick() early-returns so adenosines don't
+  // start spawning behind the user's back while they read the rules.
   function initWelcomeModal() {
     const overlay = document.getElementById('cg-welcome');
     const cta     = document.getElementById('cg-welcome-cta');
@@ -596,10 +607,17 @@
 
     let seen = false;
     try { seen = localStorage.getItem('cgSeenWelcome') === '1'; } catch (_) {}
-    if (!seen) overlay.hidden = false;
+    if (!seen) {
+      overlay.hidden = false;
+      state.welcomeOpen = true;
+    }
 
     cta.addEventListener('click', () => {
       overlay.hidden = true;
+      state.welcomeOpen = false;
+      // Drop the recorded last-frame time so the first real tick after
+      // unpause uses the default 16ms dt instead of jumping forward.
+      state.lastFrameTime = 0;
       try { localStorage.setItem('cgSeenWelcome', '1'); } catch (_) {}
     });
   }
