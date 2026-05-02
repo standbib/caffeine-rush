@@ -505,7 +505,7 @@ button:disabled {
 .cgame-mug-svg { flex-shrink: 0; color: var(--color-text-primary); }
 .cgame-mug-liquid { transition: transform 0.4s ease; transform-origin: 0 0; }
 .cgame-drink { /* centered with the rest */ }
-.cgame-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius-lg); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.cgame-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius-lg); opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 10; }
 .cgame-overlay.show { opacity: 1; pointer-events: auto; }
 .cgame-overlay-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 20px 28px; text-align: center; border: 0.5px solid var(--color-border-tertiary); min-width: 220px; }
 .cgame-overlay-title { font-size: 18px; font-weight: 500; margin: 0 0 6px; color: var(--color-text-primary); }
