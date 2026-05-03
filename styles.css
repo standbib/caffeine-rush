@@ -140,7 +140,11 @@ body {
 .page-actions {
   margin-top: 18px;
   display: flex;
-  align-items: center;
+  /* baseline (not center) so the counter text and the "Share" text inside
+     the button sit on the same letter baseline. align-items: center aligns
+     box centers, which read as misaligned when items have very different
+     heights (text-only counter vs. padded button). */
+  align-items: baseline;
   justify-content: center;
   flex-wrap: wrap;
   gap: 16px;
