@@ -53,7 +53,7 @@
   const COOLDOWN_RING_CIRCUMFERENCE = 56.55; // 2 * pi * 9
 
   const state = {
-    score: 0, caffeine: 5, caffeineMax: 8,
+    score: 0, caffeine: 5, caffeineMax: 8, drinks: 0,
     drinkCooldown: 0, drinkCooldownMax: 8000,
     clickCooldown: 0, clickCooldownMax: 400,
     receptors: [], adenosines: [], pendingCaffeine: [],
@@ -346,8 +346,17 @@
     if (state.drinkCooldown > 0 || state.gameOver) return;
     state.caffeine = state.caffeineMax;
     state.drinkCooldown = state.drinkCooldownMax;
+    state.drinks++;
+    // Optimistic local tick — page counter ticks up the moment the player
+    // refills, before the score is even submitted. Feels alive.
+    if (typeof window.cgIncrementCoffeesRefilled === 'function') {
+      window.cgIncrementCoffeesRefilled();
+    }
   }
   window.cgDrink = drink;
+  // Expose live state for cross-file reads (supabase.js needs state.drinks
+  // when submitting the final score). Read-only by convention.
+  window.cgGameState = state;
 
   function endGame() {
     state.gameOver = true;
@@ -383,7 +392,7 @@
       clearTimeout(state.intermissionTimerId);
     }
     Object.assign(state, {
-      score: 0, caffeine: 5, drinkCooldown: 0, clickCooldown: 0,
+      score: 0, caffeine: 5, drinks: 0, drinkCooldown: 0, clickCooldown: 0,
       adenosines: [], pendingCaffeine: [], adenosineNextSpawn: 2000,
       level: 1, levelIdx: 0, levelStartTime: 0,
       alertnessTimer: 0, gameTime: 0, gameOver: false, lastFrameTime: 0,
@@ -811,9 +820,42 @@
     doneBtn.onclick = close;
   }
 
+  // Coffees-refilled global counter. On page load we fetch the server total
+  // once, then expose an optimistic incrementer that drink() calls so the
+  // displayed number ticks up the moment the local player refills — no need
+  // to wait for a score submission round-trip to feel alive.
+  function initCoffeesCounter() {
+    const el = document.getElementById('cg-coffees-count');
+    if (!el) return;
+    let serverTotal = 0;
+    let localExtra  = 0;
+
+    function format(n) { return n.toLocaleString('en-US'); }
+    function render() {
+      el.textContent = format(serverTotal + localExtra);
+    }
+
+    window.cgIncrementCoffeesRefilled = function() {
+      localExtra++;
+      render();
+      el.classList.add('bump');
+      setTimeout(() => el.classList.remove('bump'), 180);
+    };
+
+    if (window.cgLeaderboard && typeof window.cgLeaderboard.fetchTotalDrinks === 'function') {
+      window.cgLeaderboard.fetchTotalDrinks().then(res => {
+        if (res && typeof res.total === 'number') {
+          serverTotal = res.total;
+          render();
+        }
+      }).catch(() => { /* leaderboard not configured — leave the placeholder */ });
+    }
+  }
+
   initWelcomeModal();
   initIntermissionControls();
   initShareButtons();
+  initCoffeesCounter();
   applyLevelTheme();
   buildBackground();
   rebuildReceptors();

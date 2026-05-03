@@ -116,7 +116,7 @@ async function fetchTopScores(limit = TOP_N, filter = 'all') {
   return { data };
 }
 
-async function submitScore({ name, score, level }) {
+async function submitScore({ name, score, level, drinks }) {
   if (!supabase) return { notConfigured: true };
 
   const cleanName = String(name || '').trim().slice(0, 20);
@@ -127,6 +127,8 @@ async function submitScore({ name, score, level }) {
 
   const safeScore = Math.max(0, Math.min(50000, Math.floor(Number(score) || 0)));
   const safeLevel = Math.max(1, Math.min(3, Math.floor(Number(level) || 1)));
+  // Drinks bounded so a single absurd value can't dominate the global counter.
+  const safeDrinks = Math.max(0, Math.min(500, Math.floor(Number(drinks) || 0)));
   const platform = detectPlatform();
 
   const { data, error } = await supabase
@@ -135,6 +137,7 @@ async function submitScore({ name, score, level }) {
       name: cleanName,
       score: safeScore,
       level_reached: safeLevel,
+      drinks: safeDrinks,
       platform: platform,
     })
     .select('id')
@@ -144,6 +147,21 @@ async function submitScore({ name, score, level }) {
   lastSubmittedId = data.id;
   try { localStorage.setItem(NAME_STORAGE_KEY, cleanName); } catch (_) {}
   return { data };
+}
+
+// Total coffees-refilled counter — sum across all rows.
+async function fetchTotalDrinks() {
+  if (!supabase) return { notConfigured: true, total: 0 };
+  // Postgres: sum() returns null for empty tables, so coalesce to 0.
+  // Using rpc-less approach: select drinks across all rows, sum client-side.
+  // For ~hundreds-of-rows scale this is fine; if it grows large we can move
+  // to a Postgres function or a materialized counter row.
+  const { data, error } = await supabase
+    .from('scores')
+    .select('drinks');
+  if (error) return { error, total: 0 };
+  const total = (data || []).reduce((acc, r) => acc + (r.drinks || 0), 0);
+  return { total };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -312,13 +330,15 @@ submitForm.addEventListener('submit', async (e) => {
 
   const score = Number(document.getElementById('cg-final').textContent) || 0;
   const level = Number(document.getElementById('cg-final-level').textContent) || 1;
+  // Drinks come straight from the in-memory state set by game.js.
+  const drinks = Number((window.cgGameState && window.cgGameState.drinks) || 0);
   const name = nameInput.value;
 
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting…';
   setStatus('');
 
-  const { data, error, notConfigured } = await submitScore({ name, score, level });
+  const { data, error, notConfigured } = await submitScore({ name, score, level, drinks });
 
   if (notConfigured) {
     setStatus('Leaderboard not enabled yet.', 'error');
@@ -351,6 +371,7 @@ window.cgLeaderboard = {
   renderMini,
   showSubmitForm,
   isConfigured,
+  fetchTotalDrinks,
 };
 
 // Initial fetch

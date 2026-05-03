@@ -21,6 +21,22 @@ create table if not exists public.scores (
 alter table public.scores
   add column if not exists platform text;
 
+-- Migration: add drinks column for the "coffees refilled" counter (idempotent).
+-- New games submit their actual drink count alongside the score.
+alter table public.scores
+  add column if not exists drinks integer not null default 0;
+
+-- Backfill: estimate drinks for any pre-existing rows that still have drinks=0.
+-- Formula: roughly 1 drink per ~60 score points, with a floor of 1 so even a
+-- zero-score game contributes one refill (the player tapped at least once).
+-- Heuristic only — driven by the fact that one starter-mug cycle is ~40-50
+-- score and each subsequent drink-then-burn cycle is ~64-80 score.
+-- Capped at 50 to prevent any single absurd score from dominating the counter.
+update public.scores
+   set drinks = least(50, greatest(1, round(score / 60.0)::int))
+ where drinks = 0
+   and score > 0;
+
 do $$ begin
   if not exists (
     select 1 from pg_constraint

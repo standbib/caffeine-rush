@@ -132,6 +132,26 @@ body {
   letter-spacing: 0.2px;
 }
 
+/* Live coffees-refilled counter — sits between the tagline and the share button.
+   Mono font matches the editorial register; small + secondary color so it reads
+   as flavor data, not a boast. The bump animation fires when the local player
+   refills (optimistic tick) so the counter feels alive while playing. */
+.page-stat {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  opacity: 0.78;
+}
+.page-stat #cg-coffees-count {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  display: inline-block;
+  transition: transform 0.18s ease;
+}
+.page-stat #cg-coffees-count.bump { transform: scale(1.12); }
+
 @media (max-width: 600px) {
   .page-header h1 { font-size: 32px; }
   .page-header .tagline { font-size: 14px; }
