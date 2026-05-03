@@ -132,12 +132,27 @@ body {
   letter-spacing: 0.2px;
 }
 
-/* Live coffees-refilled counter — sits between the tagline and the share button.
-   Mono font matches the editorial register; small + secondary color so it reads
-   as flavor data, not a boast. The bump animation fires when the local player
-   refills (optimistic tick) so the counter feels alive while playing. */
+/* The action row beneath the tagline pairs the live coffees-refilled counter
+   with the page-share button. Counter on the left = "people are playing this"
+   credibility; share button on the right = the action that pairs naturally
+   with that signal. Single horizontal unit; flex-wraps to a stack on narrow
+   viewports without losing the sense that they belong together. */
+.page-actions {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Live coffees-refilled counter. Mono font matches the editorial register;
+   small + secondary color so it reads as flavor data, not a boast. The bump
+   animation fires when the local player refills (optimistic tick) so the
+   counter feels alive while playing. Top margin reset — parent .page-actions
+   controls vertical spacing now. */
 .page-stat {
-  margin: 14px 0 0;
+  margin: 0;
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -185,7 +200,6 @@ body {
 .page-share-wrap {
   position: relative;
   display: inline-flex;
-  margin-top: 12px;
 }
 .page-share-btn {
   font-size: 12px;
