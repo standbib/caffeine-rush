@@ -137,7 +137,7 @@ body {
    as flavor data, not a boast. The bump animation fires when the local player
    refills (optimistic tick) so the counter feels alive while playing. */
 .page-stat {
-  margin: 6px 0 0;
+  margin: 14px 0 0;
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -151,6 +151,28 @@ body {
   transition: transform 0.18s ease;
 }
 .page-stat #cg-coffees-count.bump { transform: scale(1.12); }
+
+/* Live indicator — small pulsing dot in the caffeine brand color before
+   the count. Slow gentle pulse (no rapid alarm vibe). */
+.page-stat-pulse {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: #D85A30;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+  animation: pageStatPulse 1.8s ease-in-out infinite;
+}
+@keyframes pageStatPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.18); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-stat-pulse { animation: none; opacity: 0.85; }
+}
 
 @media (max-width: 600px) {
   .page-header h1 { font-size: 32px; }
