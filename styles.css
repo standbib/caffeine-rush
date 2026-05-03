@@ -138,16 +138,14 @@ body {
    with that signal. Single horizontal unit; flex-wraps to a stack on narrow
    viewports without losing the sense that they belong together. */
 .page-actions {
-  margin-top: 18px;
+  margin-top: 10px;
   display: flex;
-  /* baseline (not center) so the counter text and the "Share" text inside
-     the button sit on the same letter baseline. align-items: center aligns
-     box centers, which read as misaligned when items have very different
-     heights (text-only counter vs. padded button). */
-  align-items: baseline;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 16px;
+  flex-direction: column;
+  align-items: center;
+  /* Stacked, not side-by-side. Counter sits tight under the tagline as a
+     sub-line of the editorial header; share button sits below as the
+     action affordance with its own visual moment. */
+  gap: 14px;
 }
 
 /* Live coffees-refilled counter. Mono font matches the editorial register;
