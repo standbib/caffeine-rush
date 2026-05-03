@@ -243,6 +243,107 @@ body {
 }
 
 /* =========================================================
+   Friends of Caffeine Rush — free placements for friend-projects.
+   Sits directly below the (still-vacant) paid Ad slot so the visual
+   joke reads as a pair: "the paid one is empty, but the friends
+   are here."
+   ========================================================= */
+
+.friends-section {
+  position: relative;
+  padding: 28px 22px 22px;
+  border: 1px dashed var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-primary);
+}
+.friends-section::before {
+  content: "Friends of Caffeine Rush";
+  position: absolute;
+  top: 8px;
+  left: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+.friends-tiles {
+  display: flex;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+/* Each tile is a single <a> so the entire tile is one tap target. */
+.friend-tile {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-primary);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.friend-tile:hover { opacity: 0.92; }
+.friend-tile:active { transform: scale(0.995); }
+
+.friend-tile-logo {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.friend-tile-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* Remi logo is edge-to-edge by design — shrink inside the chip so the R
+   gets the same visual breathing room as SipList's full-bleed icon. */
+.friend-tile-logo--remi { background: #F2EAD9; }
+.friend-tile-logo--remi img { width: 64%; height: 64%; }
+
+.friend-tile-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.friend-tile-line { display: block; color: var(--color-text-secondary); margin-bottom: 6px; }
+.friend-tile-line strong { color: var(--color-text-primary); font-weight: 600; }
+.friend-tile-cta { display: inline-block; margin-top: 2px; line-height: 0; }
+.app-store-badge-img { display: block; height: 32px; width: auto; }
+.friend-tile-url {
+  display: inline-block;
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.5px;
+  text-underline-offset: 2px;
+}
+
+/* Treatment: per-tile brand-colored borders. Pink->orange gradient for
+   SipList; solid terracotta for Remi. Padding-box trick for the gradient
+   border without losing the tile's neutral interior. */
+.friend-tile.tile-siplist {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--color-background-primary), var(--color-background-primary)) padding-box,
+    linear-gradient(135deg, #FF8159 0%, #F94A85 100%) border-box;
+}
+.friend-tile.tile-remi {
+  border: 2px solid #C97A5C;
+}
+
+@media (max-width: 600px) {
+  .friends-tiles { flex-direction: column; }
+}
+
+/* =========================================================
    Buy Me a Coffee link
    ========================================================= */
 .bmc-wrap {
