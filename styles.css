@@ -138,14 +138,14 @@ body {
    with that signal. Single horizontal unit; flex-wraps to a stack on narrow
    viewports without losing the sense that they belong together. */
 .page-actions {
-  margin-top: 10px;
+  /* Push the counter+share pair down so it visually separates from the
+     editorial header. Counter sits tight against the share button (small
+     gap) so they read as a paired unit, not as two independent rows. */
+  margin-top: 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Stacked, not side-by-side. Counter sits tight under the tagline as a
-     sub-line of the editorial header; share button sits below as the
-     action affordance with its own visual moment. */
-  gap: 14px;
+  gap: 6px;
 }
 
 /* Live coffees-refilled counter. Mono font matches the editorial register;
