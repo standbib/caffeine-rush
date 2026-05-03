@@ -222,7 +222,6 @@ function renderRows(rows) {
         <span class="leaderboard-rank">#${rank}</span>
         <span class="leaderboard-name">${escapeHtml(row.name)}</span>
         ${platformPip(row.platform)}
-        <span class="leaderboard-level">L${row.level_reached}</span>
         <span class="leaderboard-score">${row.score.toLocaleString()}</span>
       </li>`;
   }).join('');

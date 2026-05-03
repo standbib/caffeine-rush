@@ -914,14 +914,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.leaderboard-level {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
 .leaderboard-score {
   font-family: var(--font-mono);
   font-size: 14px;
@@ -985,7 +977,6 @@ button:disabled {
     gap: 10px;
     padding: 9px 12px;
   }
-  .leaderboard-level { display: none; }
 }
 
 /* =========================================================
