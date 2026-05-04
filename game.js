@@ -852,10 +852,62 @@
     }
   }
 
+  // Vercel Web Analytics custom events. window.va is queue-primed in
+  // index.html so calls work whether the deferred script has loaded yet.
+  // Safe no-op if analytics is blocked or not yet provisioned.
+  function trackEvent(name, props) {
+    try {
+      if (typeof window.va === 'function') {
+        window.va('event', Object.assign({ name: name }, props || {}));
+      }
+    } catch (_) { /* never let tracking break the page */ }
+  }
+
+  function initEventTracking() {
+    // Friend tiles — full-tile click maps to brand
+    document.querySelectorAll('.friend-tile').forEach(tile => {
+      tile.addEventListener('click', () => {
+        const target = tile.classList.contains('tile-siplist') ? 'siplist'
+                     : tile.classList.contains('tile-remi')    ? 'remi'
+                     : 'unknown';
+        trackEvent('friend_click', { target: target });
+      });
+    });
+
+    // BMC tip buttons — capture which preset (or custom) was tapped
+    document.querySelectorAll('.tip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const amt = (btn.querySelector('.tip-btn-amt') || {}).textContent || 'unknown';
+        trackEvent('tip_click', { amount: amt });
+      });
+    });
+    const customTip = document.querySelector('.tip-btn-custom');
+    if (customTip) {
+      customTip.addEventListener('click', () => trackEvent('tip_click', { amount: 'custom' }));
+    }
+
+    // Email link in the (vacant) Ad slot
+    const adslotEmail = document.querySelector('.ad-slot a[href^="mailto:"]');
+    if (adslotEmail) {
+      adslotEmail.addEventListener('click', () => trackEvent('adslot_email_click'));
+    }
+
+    // Share buttons — separate sources so we can see which converts better
+    const pageShare = document.getElementById('cg-page-share-btn');
+    if (pageShare) {
+      pageShare.addEventListener('click', () => trackEvent('share_click', { source: 'page' }));
+    }
+    const gameOverShare = document.getElementById('cg-share-btn');
+    if (gameOverShare) {
+      gameOverShare.addEventListener('click', () => trackEvent('share_click', { source: 'gameover' }));
+    }
+  }
+
   initWelcomeModal();
   initIntermissionControls();
   initShareButtons();
   initCoffeesCounter();
+  initEventTracking();
   applyLevelTheme();
   buildBackground();
   rebuildReceptors();
