@@ -149,6 +149,32 @@ async function submitScore({ name, score, level, drinks }) {
   return { data };
 }
 
+// Custom event tracker — INSERTs into the events table for our DIY
+// analytics. Fire-and-forget: never await, never throw, never block UX.
+function trackEvent(name, props) {
+  if (!supabase) return;
+  try {
+    supabase.from('events').insert({
+      event_name: String(name).slice(0, 64),
+      props: props || null,
+    }).then(() => {}, () => {}); // swallow promise so failures are silent
+  } catch (_) { /* never let tracking break the page */ }
+}
+
+// Fetch raw events for the admin dashboard. Limited to the most recent
+// `limit` events (default 5000) — fine for personal-scale; if it grows
+// large we can move to a Postgres function for server-side aggregation.
+async function fetchEvents(limit) {
+  if (!supabase) return { notConfigured: true, data: [] };
+  const { data, error } = await supabase
+    .from('events')
+    .select('event_name, props, created_at')
+    .order('created_at', { ascending: false })
+    .limit(Math.min(limit || 5000, 10000));
+  if (error) return { error, data: [] };
+  return { data: data || [] };
+}
+
 // Total coffees-refilled counter — sum across all rows.
 async function fetchTotalDrinks() {
   if (!supabase) return { notConfigured: true, total: 0 };
@@ -371,6 +397,8 @@ window.cgLeaderboard = {
   showSubmitForm,
   isConfigured,
   fetchTotalDrinks,
+  trackEvent,
+  fetchEvents,
 };
 
 // Initial fetch

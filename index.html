@@ -25,13 +25,9 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles.css">
 
-  <!-- Vercel Web Analytics — vanilla HTML setup (no npm package, no build).
-       Inline queue primer means window.va('event', ...) calls work even
-       before the deferred script finishes loading. Auto-tracks page views;
-       custom click events are fired from game.js. -->
-  <script>
-    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-  </script>
+  <!-- Vercel Web Analytics — page-view tracking (auto). Custom click events
+       are gated behind Vercel Pro, so we use a Supabase events table for
+       those instead (see /admin.html for the dashboard). -->
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>

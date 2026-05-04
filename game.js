@@ -852,13 +852,14 @@
     }
   }
 
-  // Vercel Web Analytics custom events. window.va is queue-primed in
-  // index.html so calls work whether the deferred script has loaded yet.
-  // Safe no-op if analytics is blocked or not yet provisioned.
+  // Custom event tracking via Supabase events table (Vercel Hobby gates
+  // their custom events behind Pro). Page views still tracked by Vercel.
+  // Fire-and-forget: never block, never throw, safe no-op if Supabase isn't
+  // configured. View aggregations at /admin.html.
   function trackEvent(name, props) {
     try {
-      if (typeof window.va === 'function') {
-        window.va('event', Object.assign({ name: name }, props || {}));
+      if (window.cgLeaderboard && typeof window.cgLeaderboard.trackEvent === 'function') {
+        window.cgLeaderboard.trackEvent(name, props);
       }
     } catch (_) { /* never let tracking break the page */ }
   }
@@ -901,6 +902,11 @@
     if (gameOverShare) {
       gameOverShare.addEventListener('click', () => trackEvent('share_click', { source: 'gameover' }));
     }
+
+    // Personal-site backlink in the footer
+    document.querySelectorAll('a[href^="https://ianstandbridge.com"], a[href^="http://ianstandbridge.com"]').forEach(link => {
+      link.addEventListener('click', () => trackEvent('ianstandbridge_click'));
+    });
   }
 
   initWelcomeModal();

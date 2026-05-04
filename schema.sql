@@ -93,6 +93,42 @@ create policy "scores_insert_anon"
   with check (true);
 
 -- ──────────────────────────────────────────────────────────────────────────
+-- Custom event tracking — DIY analytics since Vercel Hobby gates custom
+-- events behind Pro. Tracks button clicks, friend-tile clicks, tip clicks,
+-- share clicks, etc. Read-only dashboard at /admin.html aggregates these.
+--
+-- props is a flexible jsonb so each event can carry the relevant detail
+-- (e.g. friend_click → { "target": "siplist" }, tip_click → { "amount": "$3" }).
+-- ──────────────────────────────────────────────────────────────────────────
+
+create table if not exists public.events (
+  id          bigint generated always as identity primary key,
+  event_name  text not null check (char_length(event_name) between 1 and 64),
+  props       jsonb,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists events_created_idx on public.events (created_at desc);
+create index if not exists events_name_idx    on public.events (event_name);
+
+alter table public.events enable row level security;
+
+drop policy if exists "events_select_all"  on public.events;
+drop policy if exists "events_insert_anon" on public.events;
+
+-- Reads are open: events contain no PII, just aggregate click counts.
+-- The /admin.html dashboard relies on this to render the read-only view.
+create policy "events_select_all"
+  on public.events for select
+  using (true);
+
+-- Anon insert is open: anyone can fire events. CHECK constraint on
+-- event_name length keeps it from being abused as bulk-data storage.
+create policy "events_insert_anon"
+  on public.events for insert
+  with check (true);
+
+-- ──────────────────────────────────────────────────────────────────────────
 -- Optional: convenience view of top 10 (handy for poking around in SQL Editor)
 -- ──────────────────────────────────────────────────────────────────────────
 
