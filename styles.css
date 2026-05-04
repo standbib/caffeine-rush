@@ -267,7 +267,11 @@ body {
   border: 1px dashed var(--color-border-secondary);
   border-radius: var(--border-radius-md);
   background: var(--color-background-primary);
-  padding: 28px 22px 22px;
+  /* Generous vertical padding so the now-trimmed single-line slot keeps the
+     visual presence the original 3-line version had. The empty space is the
+     point — it's a vacant ad slot, the box should feel substantial enough
+     that the eye notices it instead of skipping past. */
+  padding: 38px 22px 36px;
   color: var(--color-text-secondary);
   font-size: 14px;
   line-height: 1.55;
