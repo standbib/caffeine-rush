@@ -113,17 +113,18 @@ create index if not exists events_name_idx    on public.events (event_name);
 
 alter table public.events enable row level security;
 
-drop policy if exists "events_select_all"  on public.events;
-drop policy if exists "events_insert_anon" on public.events;
+drop policy if exists "events_select_all"   on public.events;
+drop policy if exists "events_select_admin" on public.events;
+drop policy if exists "events_insert_anon"  on public.events;
 
--- Reads are open: events contain no PII, just aggregate click counts.
--- The /admin.html dashboard relies on this to render the read-only view.
-create policy "events_select_all"
+-- Reads are restricted to the admin email — server-enforced via RLS so
+-- even if someone else manages to authenticate, they can't see events.
+-- Update the email below to add/change admins.
+create policy "events_select_admin"
   on public.events for select
-  using (true);
+  using (auth.email() = 'istand34@gmail.com');
 
--- Anon insert is open: anyone can fire events. CHECK constraint on
--- event_name length keeps it from being abused as bulk-data storage.
+-- Anon insert is open: anyone can fire events from the public page.
 create policy "events_insert_anon"
   on public.events for insert
   with check (true);

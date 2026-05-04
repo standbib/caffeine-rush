@@ -9,11 +9,67 @@
   <link rel="stylesheet" href="/styles.css">
   <style>
     /* Read-only admin dashboard. Reuses the site's design tokens and editorial
-       register so it feels coherent with the public page. No tracking fired
-       from this page — just SELECTs against the events table. */
+       register so it feels coherent with the public page. Auth via Supabase
+       magic-link; events table SELECT is restricted to the admin email by RLS. */
     .admin-wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
     .admin-title { font-family: var(--font-serif); font-size: 28px; font-weight: 500; margin: 0 0 4px; letter-spacing: -0.3px; }
     .admin-sub { color: var(--color-text-secondary); font-size: 14px; margin: 0 0 24px; line-height: 1.55; }
+
+    /* Login card — only shown when no auth session exists. */
+    .admin-login {
+      max-width: 380px;
+      margin: 36px auto;
+      padding: 28px 24px;
+      border: 1px dashed var(--color-border-secondary);
+      border-radius: var(--border-radius-md);
+      background: var(--color-background-primary);
+      text-align: center;
+    }
+    .admin-login h2 {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 500;
+      margin: 0 0 6px;
+    }
+    .admin-login p {
+      color: var(--color-text-secondary);
+      font-size: 13px;
+      line-height: 1.55;
+      margin: 0 0 18px;
+    }
+    .admin-login form { display: flex; flex-direction: column; gap: 10px; }
+    .admin-login input[type="email"] {
+      padding: 9px 12px;
+      font-size: 14px;
+      border: 1px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-md);
+      background: var(--color-background-primary);
+      color: var(--color-text-primary);
+      font-family: var(--font-sans);
+    }
+    .admin-login button[type="submit"] {
+      background: var(--color-text-primary);
+      color: var(--color-background-primary);
+      border-color: var(--color-text-primary);
+      font-size: 13px;
+      padding: 9px 16px;
+    }
+    .admin-login button[type="submit"]:hover:not(:disabled) {
+      background: var(--color-text-primary);
+      color: var(--color-background-primary);
+      border-color: var(--color-text-primary);
+      opacity: 0.85;
+    }
+    .admin-login-msg {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      min-height: 1.4em;
+    }
+    .admin-login-msg.is-error { color: var(--color-text-danger, #b00); }
+    .admin-login-msg.is-ok    { color: var(--color-text-success, #0a7); }
+
+    /* Dashboard — only shown when authenticated. */
     .admin-controls { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
     .admin-range-tabs { display: inline-flex; gap: 4px; }
     .admin-range-tabs button {
@@ -47,13 +103,26 @@
     .admin-table td { padding: 6px 0; border-bottom: 1px solid var(--color-border-tertiary); }
     .admin-table td:last-child { text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--color-text-primary); }
     .admin-table tr:last-child td { border-bottom: none; }
-    .admin-table .indent { padding-left: 18px; color: var(--color-text-secondary); }
     .admin-empty { color: var(--color-text-secondary); font-size: 13px; font-style: italic; padding: 8px 0; }
     .admin-status { color: var(--color-text-secondary); font-size: 12px; font-family: var(--font-mono); }
     .admin-recent { font-family: var(--font-mono); font-size: 12px; line-height: 1.7; color: var(--color-text-secondary); }
     .admin-recent .ev-name { color: var(--color-text-primary); font-weight: 600; }
     .admin-recent .ev-time { opacity: 0.6; }
     .admin-recent .ev-props { opacity: 0.7; }
+
+    .admin-session-info {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+    }
+    .admin-signout {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+    }
   </style>
 </head>
 <body>
@@ -61,40 +130,56 @@
     <h1 class="admin-title">Caffeine Rush — admin</h1>
     <p class="admin-sub">Read-only event counts from the Supabase events table. Page views are tracked separately by Vercel Web Analytics.</p>
 
-    <div class="admin-controls">
-      <div class="admin-range-tabs" role="tablist" aria-label="Time range">
-        <button type="button" data-range="7d" class="is-active">7 days</button>
-        <button type="button" data-range="30d">30 days</button>
-        <button type="button" data-range="all">All time</button>
+    <!-- Login state — magic-link form -->
+    <section class="admin-login" id="admin-login" hidden>
+      <h2>Sign in</h2>
+      <p>Enter your admin email to receive a magic link. Only the configured admin email will be granted access.</p>
+      <form id="admin-login-form">
+        <input type="email" id="admin-email" placeholder="you@example.com" required autocomplete="email">
+        <button type="submit" id="admin-send-btn">Send magic link</button>
+      </form>
+      <div class="admin-login-msg" id="admin-login-msg" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- Dashboard state — only shown when authenticated -->
+    <div id="admin-dashboard" hidden>
+      <div class="admin-controls">
+        <div class="admin-range-tabs" role="tablist" aria-label="Time range">
+          <button type="button" data-range="7d" class="is-active">7 days</button>
+          <button type="button" data-range="30d">30 days</button>
+          <button type="button" data-range="all">All time</button>
+        </div>
+        <button type="button" id="admin-refresh">Refresh</button>
+        <span class="admin-status" id="admin-status"></span>
+        <span class="admin-session-info" id="admin-session-info"></span>
+        <button type="button" class="admin-signout" id="admin-signout">Sign out</button>
       </div>
-      <button type="button" id="admin-refresh">Refresh</button>
-      <span class="admin-status" id="admin-status"></span>
+
+      <section class="admin-section">
+        <div class="admin-section-label">Event totals</div>
+        <table class="admin-table" id="admin-totals"></table>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-label">Friend tile clicks (Friends of Caffeine Rush)</div>
+        <table class="admin-table" id="admin-friends"></table>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-label">Tip clicks (BMC)</div>
+        <table class="admin-table" id="admin-tips"></table>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-label">Share button clicks</div>
+        <table class="admin-table" id="admin-shares"></table>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-label">Recent events (last 50)</div>
+        <div class="admin-recent" id="admin-recent"></div>
+      </section>
     </div>
-
-    <section class="admin-section">
-      <div class="admin-section-label">Event totals</div>
-      <table class="admin-table" id="admin-totals"></table>
-    </section>
-
-    <section class="admin-section">
-      <div class="admin-section-label">Friend tile clicks (Friends of Caffeine Rush)</div>
-      <table class="admin-table" id="admin-friends"></table>
-    </section>
-
-    <section class="admin-section">
-      <div class="admin-section-label">Tip clicks (BMC)</div>
-      <table class="admin-table" id="admin-tips"></table>
-    </section>
-
-    <section class="admin-section">
-      <div class="admin-section-label">Share button clicks</div>
-      <table class="admin-table" id="admin-shares"></table>
-    </section>
-
-    <section class="admin-section">
-      <div class="admin-section-label">Recent events (last 50)</div>
-      <div class="admin-recent" id="admin-recent"></div>
-    </section>
   </main>
 
   <script type="module">
@@ -104,14 +189,98 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_I4hUtZIYs0GJ3wY0fpacFg_PhPK6abP';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const loginEl       = document.getElementById('admin-login');
+    const dashboardEl   = document.getElementById('admin-dashboard');
+    const loginForm     = document.getElementById('admin-login-form');
+    const emailInput    = document.getElementById('admin-email');
+    const sendBtn       = document.getElementById('admin-send-btn');
+    const loginMsg      = document.getElementById('admin-login-msg');
+    const sessionInfoEl = document.getElementById('admin-session-info');
+    const signoutBtn    = document.getElementById('admin-signout');
+    const statusEl      = document.getElementById('admin-status');
+
     let currentRange = '7d';
-    const statusEl = document.getElementById('admin-status');
+
+    function setLoginMsg(msg, kind) {
+      loginMsg.textContent = msg || '';
+      loginMsg.classList.remove('is-error', 'is-ok');
+      if (kind === 'error') loginMsg.classList.add('is-error');
+      if (kind === 'ok')    loginMsg.classList.add('is-ok');
+    }
+
+    function showLogin() {
+      loginEl.hidden = false;
+      dashboardEl.hidden = true;
+    }
+    function showDashboard(session) {
+      loginEl.hidden = true;
+      dashboardEl.hidden = false;
+      sessionInfoEl.textContent = session.user.email;
+      load();
+    }
+
+    // Magic-link form
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = emailInput.value.trim();
+      if (!email) return;
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending…';
+      setLoginMsg('');
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: window.location.origin + '/admin.html',
+        },
+      });
+
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send magic link';
+      if (error) {
+        setLoginMsg('Error: ' + error.message, 'error');
+        return;
+      }
+      setLoginMsg('Check your email for the sign-in link.', 'ok');
+    });
+
+    signoutBtn.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      // onAuthStateChange will swap us back to the login view.
+    });
+
+    // React to auth state changes (initial session, magic-link landing, signout).
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (session && session.user) {
+        showDashboard(session);
+      } else {
+        showLogin();
+      }
+    });
+
+    // Initial check — if we're returning from a magic link, the client picks
+    // up the session from the URL hash and onAuthStateChange fires SIGNED_IN.
+    // If a session is already in localStorage, getSession() returns it now.
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session && data.session.user) {
+        showDashboard(data.session);
+      } else {
+        showLogin();
+      }
+    })();
+
+    // ── Dashboard data ───────────────────────────────────────────────────
 
     function rangeStart(range) {
       const now = Date.now();
       if (range === '7d')  return new Date(now - 7  * 24 * 60 * 60 * 1000).toISOString();
       if (range === '30d') return new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
-      return null; // all time
+      return null;
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
     function rowsHtml(rows) {
@@ -119,14 +288,7 @@
       return rows.map(r => `<tr><td>${escapeHtml(r.label)}</td><td>${r.count}</td></tr>`).join('');
     }
 
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-
-    function formatTime(iso) {
-      const d = new Date(iso);
-      return d.toLocaleString();
-    }
+    function formatTime(iso) { return new Date(iso).toLocaleString(); }
 
     async function load() {
       statusEl.textContent = 'Loading…';
@@ -139,7 +301,6 @@
       const events = data || [];
       statusEl.textContent = events.length + ' events';
 
-      // Aggregate event totals
       const totals = new Map();
       const friends = new Map();
       const tips = new Map();
@@ -167,7 +328,6 @@
       document.getElementById('admin-tips').innerHTML    = rowsHtml(toRows(tips));
       document.getElementById('admin-shares').innerHTML  = rowsHtml(toRows(shares));
 
-      // Recent events list (last 50)
       const recent = events.slice(0, 50).map(e => {
         const propsStr = e.props ? '  ' + JSON.stringify(e.props) : '';
         return `<div><span class="ev-time">${formatTime(e.created_at)}</span>  <span class="ev-name">${escapeHtml(e.event_name)}</span><span class="ev-props">${escapeHtml(propsStr)}</span></div>`;
@@ -175,7 +335,6 @@
       document.getElementById('admin-recent').innerHTML = recent || '<div class="admin-empty">No events yet.</div>';
     }
 
-    // Range tab buttons
     document.querySelectorAll('.admin-range-tabs button').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.admin-range-tabs button').forEach(b => b.classList.remove('is-active'));
@@ -186,7 +345,6 @@
     });
 
     document.getElementById('admin-refresh').addEventListener('click', load);
-    load();
   </script>
 </body>
 </html>
