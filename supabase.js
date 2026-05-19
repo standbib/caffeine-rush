@@ -149,26 +149,33 @@ async function submitScore({ name, score, level, drinks }) {
   return { data };
 }
 
-// Custom event tracker — INSERTs into the events table for our DIY
-// analytics. Fire-and-forget: never await, never throw, never block UX.
+// Custom event tracker — INSERTs into the unified `events` table for our
+// DIY analytics. Fire-and-forget: never await, never throw, never block UX.
+// The `world: 'caffeine-rush'` discriminator scopes rows to this app so
+// the same table can be shared across ian-world and any future world.
+// Pre-migration column names were `event_name` + `props`; new schema uses
+// `event_type` + `event_data`. See SUPABASE-SETUP.md in ian-world repo for
+// the full migration playbook.
 function trackEvent(name, props) {
   if (!supabase) return;
   try {
     supabase.from('events').insert({
-      event_name: String(name).slice(0, 64),
-      props: props || null,
+      world: 'caffeine-rush',
+      event_type: String(name).slice(0, 64),
+      event_data: props || {},
     }).then(() => {}, () => {}); // swallow promise so failures are silent
   } catch (_) { /* never let tracking break the page */ }
 }
 
-// Fetch raw events for the admin dashboard. Limited to the most recent
-// `limit` events (default 5000) — fine for personal-scale; if it grows
-// large we can move to a Postgres function for server-side aggregation.
+// Fetch raw events for the admin dashboard. Scoped to this app's world so
+// caffeine-rush admin never sees ian-world's events even though they share
+// a table. Limited to the most recent `limit` events (default 5000).
 async function fetchEvents(limit) {
   if (!supabase) return { notConfigured: true, data: [] };
   const { data, error } = await supabase
     .from('events')
-    .select('event_name, props, created_at')
+    .select('event_type, event_data, created_at')
+    .eq('world', 'caffeine-rush')
     .order('created_at', { ascending: false })
     .limit(Math.min(limit || 5000, 10000));
   if (error) return { error, data: [] };
